@@ -9,7 +9,7 @@ class TelegramBot:
     Class handling all the operations of the bot
     """
     def __init__(self, bot_token, db_token) -> None:
-        self.token = token
+        self.token = bot_token
         self.app = Application.builder().token(self.token).build()
         self.state = State.DEAD
         self.database = Database(token=db_token)
@@ -65,3 +65,5 @@ class TelegramBot:
         """
         print("Bot is running...")
         self.app.run_polling()
+
+    # TODO: Implement all the functionalities of the bot

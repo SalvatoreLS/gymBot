@@ -70,7 +70,7 @@ class Database:
                 return False
             
             # Hash the password
-            hashed_password = bcrypt.hashpw(password=password.encode(), bcrypt.gensalt())
+            hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
             # Insert into DB
             cursor.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hashed_password.decode()))
@@ -81,3 +81,5 @@ class Database:
         except Exception as e:
             print(f"Database error: {e}")
             return False
+
+    # TODO: Implement other functions to interact with the DB

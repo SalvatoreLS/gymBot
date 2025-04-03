@@ -10,7 +10,6 @@ class Database:
         """
         Initialization of the database
         """
-        self.token = token
         self.db_url = db_url
         self.db_auth_key = db_auth_key
 

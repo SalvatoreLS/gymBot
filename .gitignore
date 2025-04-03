@@ -22,3 +22,7 @@ rad.json
 TestResults.xml
 # Environment
 .env
+# Python cache
+__pycache__/
+# Database data
+my_db.db*

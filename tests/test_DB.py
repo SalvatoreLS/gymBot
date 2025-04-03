@@ -1,16 +1,19 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from database import Database
+from src.database import Database
 import bcrypt
 import os
 from dotenv import load_dotenv
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 load_dotenv()
 
 class TestDB(unittest.TestCase):
 
     @patch('database.libsql.connect')
-    def set_up(self, mock_connect):
+    def setUp(self, mock_connect):
         self.mock_conn = MagicMock()
         mock_connect.return_value = self.mock_conn
         self.db = Database(
@@ -22,6 +25,16 @@ class TestDB(unittest.TestCase):
         self.assertIsNotNone(self.db.conn)
         self.assertEqual(self.db.db_url, os.getenv("TEST_DB_URL", "mock_url"))
         self.assertEqual(self.db.db_auth_key, os.getenv("TEST_DB_KEY", "mock_key"))
+    
+    def test_connect_to_db(self):
+        self.db.connect_to_db()
+        self.mock_conn.sync.assert_called_once()
+        self.mock_conn.cursor.assert_called_once()
+        self.mock_conn.execute.assert_called_once()
+        self.mock_conn.commit.assert_called_once()
+        self.mock_conn.close.assert_called_once()
+        self.assertIsNotNone(self.db.conn)
+        self.assertEqual(self.db.conn, self.mock_conn)
     
     @patch('bcrypt.checkpw', return_value=True)
     def test_check_user_valid(self, mock_checkpw):

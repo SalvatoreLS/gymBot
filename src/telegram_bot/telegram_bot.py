@@ -4,6 +4,16 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from database import Database
 from state_machine import State
 
+# State handlers
+from telegram_bot.state_handlers.dead_state import DeadStateHandler
+from telegram_bot.state_handlers.login_state import LoginStateHandler
+from telegram_bot.state_handlers.authenticated_state import AuthenticatedStateHandler
+from telegram_bot.state_handlers.type_program_state import TypeProgramStateHandler
+from telegram_bot.state_handlers.type_day_state import TypeDayStateHandler
+from telegram_bot.state_handlers.ready_state import ReadyStateHandler
+from telegram_bot.state_handlers.started_state import StartedStateHandler
+from telegram_bot.state_handlers.end_state import EndStateHandler
+
 class TelegramBot:
     """
     Class handling all the operations of the bot
@@ -12,10 +22,23 @@ class TelegramBot:
         self.token = bot_token
         self.app = Application.builder().token(self.token).build()
         self.state = State.DEAD
+
         self.database = Database(
             db_url=db_url,
             db_auth_key=db_auth_key)
+        
         self.user_db = {}
+
+        self.state_handlers = {
+            State.DEAD           :  DeadStateHandler(self),
+            State.LOGIN          :  LoginStateHandler(self),
+            State.AUTHENTICATED  :  AuthenticatedStateHandler(self),
+            State.TYPE_PROGRAM   :  TypeProgramStateHandler(self),
+            State.TYPE_DAY       :  TypeDayStateHandler(self),
+            State.READY          :  ReadyStateHandler(self),
+            State.STARTED        :  StartedStateHandler(self),
+            State.END            :  EndStateHandler(self)
+        }
 
         # Add command handlers
         self.app.add_handler(CommandHandler("start", self.start))

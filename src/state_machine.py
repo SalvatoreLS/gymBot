@@ -26,7 +26,6 @@ class SubStateUpdateExercise(Enum):
     NONE = 0
     TYPE_EXPRESSION = 1 # User types the expression for updating the exercise
 
-# TODO: Add substates for other states
 class StateMachine:
     def __init__(self):
         self.state = State.DEAD
@@ -36,24 +35,28 @@ class StateMachine:
 
     # Setters and Getters
 
+    # Main state
     def set_state(self, state: State):
         self.state = state
 
     def get_state(self) -> State:
         return self.state
 
+    # Substate update set
     def set_substate_update_set(self, substate: SubStateUpdateSet):
         self.substate_update_set = substate
     
     def get_substate_update_set(self) -> SubStateUpdateSet:
         return self.substate_update_set
     
+    # Substate update exercise
     def set_sunbstate_update_exercise(self, substate: SubStateUpdateExercise):
         self.substate_update_exercise = substate
     
     def get_substate_update_exercise(self) -> SubStateUpdateExercise:
         return self.substate_update_exercise
     
+    # Substate login
     def set_substate_login(self, substate: SubStateLogin):
         self.substate_login = substate
     

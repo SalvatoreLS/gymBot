@@ -2,6 +2,7 @@ from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
 
 from database import Database
+from state_machine import StateMachine
 from state_machine import State
 
 # State handlers
@@ -21,7 +22,7 @@ class TelegramBot:
     def __init__(self, bot_token, db_url, db_auth_key) -> None:
         self.token = bot_token
         self.app = Application.builder().token(self.token).build()
-        self.state = State.DEAD
+        self.state_machine = StateMachine()
 
         self.database = Database(
             db_url=db_url,
@@ -45,6 +46,22 @@ class TelegramBot:
         self.app.add_handler(CommandHandler("help", self.help))
         self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
         self.app.add_handler(CallbackQueryHandler(self.button_click))
+    
+    def add_user(self, user_id, chat_id, username, first_name):
+        """
+        Adds a user to the database
+        """
+        self.user_db[user_id] = {
+            "chat_id": chat_id,
+            "username": username,
+            "first_name": first_name
+        }
+
+    def is_user_registered(self, user_id):
+        """
+        Checks if a user is registered
+        """
+        return user_id in self.user_db
 
     async def start(self, update: Update, context: CallbackContext) -> None:
         """
@@ -81,17 +98,21 @@ class TelegramBot:
         """
         Handles text messages from users
         """
-        text = update.message.text.lower()
+        user_id = update.message.from_user.id
+        chat_id = update.message.chat.id
 
-        responses = {
-            "help": "Here is how I can help you...",
-            "commands": "Available commands: /start, /help, /settings",
-            "settings": "Here are your settings options...",
-            "about": "I'm a Telegram bot created to assist you!"
-        }
+        # Check if the user is in the database
+        if user_id not in self.user_db:
+            await update.message.reply_text("You are not registered. Please use /start to register.")
+            return
 
-        response = responses.get(text, "I didn't understand that. Please try again.")
-        await update.message.reply_text(response)
+        # Get the user's state from the state machine
+        user_state = self.state_machine.get_state()
+
+        # Handle the message based on the user's state
+        handler = self.state_handlers.get(user_state)
+        if handler:
+            await handler.handle_message(update, context)
 
     async def button_click(self, update: Update, context: CallbackContext) -> None:
         """

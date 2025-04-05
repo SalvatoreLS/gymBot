@@ -1,20 +1,110 @@
 from base_handler import BaseStateHandler
+from telegram import Update
+from telegram.ext import CallbackContext
+
+from state_machine import State, SubStateLogin
 
 class LoginStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
-        self.state = "login"
+        self.login_callbacks = {
+            SubStateLogin.NONE: self.get_username,
+            SubStateLogin.USERNAME: self.get_password,
+            SubStateLogin.PASSWORD: self.authenticate
+        }
+        self.update = None
+        self.context = None
+        
+        self.next_state = State.AUTHENTICATED
+        
+        self.username = None
+        self.password = None
 
-    def handle_message(self, message):
-        # Handle login messages
-        if message.text == "/login":
-            self.bot.send_message(message.chat.id, "Please enter your username and password.")
-        else:
-            self.bot.send_message(message.chat.id, "Invalid command. Please use /login to start the login process.")
+        self.max_retries = 3
+        self.retries = 0
 
-    def handle_callback(self, callback):
-        # Handle login callbacks
-        if callback.data == "login_success":
-            self.bot.send_message(callback.message.chat.id, "Login successful!")
+    async def handle_message(self, update: Update, context: CallbackContext):
+        
+        self.update = update
+        self.context = context
+
+        message = update.message
+        
+        self.login_callbacks.get(self.bot.state_machine.get_substate_login(), self.default_handler)(message=message)
+
+    def get_username(self, message: str):
+        """
+        Handles the username input
+        """
+
+        # The message received is the username
+        self.username = message.text
+
+        if self.bot.db.check_username(self.username):
+            self.bot.send_message(
+                chat_id=self.update.message.chat.id,
+                text="Valid username. Please enter your password."
+            )
+            self.bot.state_machine.set_substate_login(SubStateLogin.USERNAME) # Username present
+            return
         else:
-            self.bot.send_message(callback.message.chat.id, "Login failed. Please try again.")
+            self.bot.send_message(
+                chat_id=self.update.message.chat.id,
+                text="Username not existing. Please enter a valid username."
+            )
+            self.bot.state_machine.set_substate_login(SubStateLogin.NONE)
+            self.username = None
+            return
+    
+    def get_password(self, message: str):
+        """
+        Handles the password input
+        """
+
+        self.password = message.text
+
+        if self.bot.check_user(self.username, self.password):
+            self.bot.send_message(
+                chat_id=self.update.message.chat.id,
+                text="Valid password. You are now logged in."
+            )
+            self.bot.state_machine.set_substate_login(SubStateLogin.PASSWORD)
+            return
+        else:
+            self.retries += 1
+            if self.retries >= self.max_retries:
+                self.bot.send_message(
+                    chat_id=self.update.message.chat.id,
+                    text="Too many attempts. Please try again later."
+                )
+                self.bot.remove_user(
+                    user_id=self.update.message.from_user.id
+                )
+                self.bot.state_machine.set_substate_login(SubStateLogin.NONE)
+                return
+            else:
+
+                self.bot.send_message(
+                    chat_id=self.update.message.chat.id,
+                    text="Invalid password. Please try again. ({} attempts left)".format(self.max_retries - self.retries)
+                )
+                self.bot.state_machine.set_substate_login(SubStateLogin.USERNAME)
+                return
+        
+    def authenticate(self, message: str):
+        """
+        Handles the authentication
+        """
+        
+        self.bot.state_machine.set_state(State.AUTHENTICATED)
+        self.bot.state_machine.set_substate_login(SubStateLogin.AUTHENTICATED)
+        self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="You are now authenticated."
+        )
+        # Show the menu for the next state
+        self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Type a command",
+            markup=super(self.next_state, self).get_reply_markup()
+        )

@@ -41,12 +41,21 @@ class TelegramBot:
             State.END            :  EndStateHandler(self)
         }
 
+        self.selected_program = {}
+        self.selected_day_id = {}
+
         # Add command handlers
         self.app.add_handler(CommandHandler("start", self.start))
         self.app.add_handler(CommandHandler("help", self.help))
         self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
         self.app.add_handler(CallbackQueryHandler(self.button_click))
     
+    def send_message(self, chat_id, text, markup=None):
+        """
+        Sends a message to the user
+        """
+        self.app.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+
     def add_user(self, user_id, chat_id, username, first_name):
         """
         Adds a user to the database
@@ -57,11 +66,40 @@ class TelegramBot:
             "first_name": first_name
         }
 
+    def remove_user(self, user_id):
+        """
+        Removes a user from the database
+        """
+        if user_id in self.user_db:
+            del self.user_db[user_id]
+
+    def check_username(self, username: str) -> bool:
+        """
+        Checks if the username is already taken
+        """
+        # TODO: Check if the username is on the DB 
+        return False
+
+    def check_user(self, username: str, password: str) -> bool:
+        """
+        Checks if the user exists in the database
+        """
+        # TODO: Check if the user exists in the DB
+        return False
+
     def is_user_registered(self, user_id):
         """
-        Checks if a user is registered
+        Checks if a user is registered in user_db
         """
         return user_id in self.user_db
+
+    def get_programs(self, chat_id):
+        """
+        Queries the database for the programs associated with the user
+        """
+        # TODO: Implement the logic to get the programs from the database
+        # TODO: Return the program ids such that the user can select that
+        pass
 
     async def start(self, update: Update, context: CallbackContext) -> None:
         """
@@ -129,11 +167,40 @@ class TelegramBot:
 
         await query.edit_message_text(text=responses.get(query.data, "Invalid choice."))
 
+    def set_selected_program(self, program):
+        """
+        Sets the selected program ID
+        """
+        self.selected_program = program
+
+    def get_selected_program(self):
+        """
+        Returns the selected program ID
+        """
+        return self.selected_program
+    
+    def set_selected_day_id(self, day_id):
+        """
+        Sets the selected day ID
+        """
+        self.selected_day_id = day_id
+
+    def get_selected_day_id(self):
+        """
+        Returns the selected day ID
+        """
+        return self.selected_day_id
+    
+    def check_and_set_program(self, chat_id, program_id):
+        """
+        Checks if the program is valid and sets it
+        """
+        # TODO: Check if the program exists in the database
+        # and set it as the selected program
+
     def run(self) -> None:
         """
         Runs the bot
         """
         print("Bot is running...")
         self.app.run_polling()
-
-    # TODO: Implement all the functionalities of the bot

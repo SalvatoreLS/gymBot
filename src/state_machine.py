@@ -50,7 +50,7 @@ class StateMachine:
         return self.substate_update_set
     
     # Substate update exercise
-    def set_sunbstate_update_exercise(self, substate: SubStateUpdateExercise):
+    def set_substate_update_exercise(self, substate: SubStateUpdateExercise):
         self.substate_update_exercise = substate
     
     def get_substate_update_exercise(self) -> SubStateUpdateExercise:

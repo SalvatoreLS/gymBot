@@ -173,11 +173,18 @@ class TelegramBot:
         """
         self.selected_program = program
 
-    def get_selected_program(self):
+    def get_selected_program(self): # TODO: check if chat_id is needed based on how the bot interacts with multiple users
         """
         Returns the selected program ID
         """
         return self.selected_program
+
+    def clear_program(self):
+        """
+        Sets program to none.
+        """
+        self.selected_program = None
+        self.selected_day_id = None
     
     def set_selected_day_id(self, day_id):
         """
@@ -197,6 +204,13 @@ class TelegramBot:
         """
         # TODO: Check if the program exists in the database
         # and set it as the selected program
+        pass
+    
+    def check_day(self, chat_id, day_id):
+        """
+        Checks if the day specified is in the selected program.
+        """
+        pass
 
     def run(self) -> None:
         """

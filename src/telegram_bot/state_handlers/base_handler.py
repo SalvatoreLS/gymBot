@@ -5,6 +5,8 @@ class BaseStateHandler:
     def __init__(self, bot):
         self.bot = bot
         self.next_state = None
+        self.update = None
+        self.context = None
         self.callbacks = {}
 
     def default_handler(self, message: str):

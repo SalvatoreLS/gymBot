@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import CallbackContext
 from base_handler import BaseHandler
+from state_handlers.login_state import LoginStateHandler
 from state_machine import State, SubStateLogin
 
 class DeadStateHandler(BaseHandler):
@@ -13,9 +14,7 @@ class DeadStateHandler(BaseHandler):
             "/commands" : self.commands,
             "/settings" : self.settings
         }
-        self.next_state = State.LOGIN
-        self.update = None
-        self.context = None
+        self.next_state = LoginStateHandler(bot=None)
 
     async def handle_message(self, update: Update, context: CallbackContext):
         # Get message

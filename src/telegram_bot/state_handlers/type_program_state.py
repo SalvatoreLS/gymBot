@@ -1,15 +1,18 @@
 from base_handler import BaseStateHandler
-
 from state_machine import State
+
+from state_handlers.type_day_state import TypeDayStateHandler
+
+from telegram import Update
+from telegram.ext import CallbackContext
 
 class TypeProgramStateHandler(BaseStateHandler):
     def __init__(self, bot):
-        self.update = None
-        self.context = None
+        super().__init__(bot)
 
-        self.next_state = State.TYPE_DAY
+        self.next_state = TypeDayStateHandler(bot=None)
 
-    async def handle_message(self, update, context):
+    async def handle_message(self, update: Update, context):
 
         self.update = update
         self.context = context
@@ -22,3 +25,9 @@ class TypeProgramStateHandler(BaseStateHandler):
                 chat_id=self.update.message.chat.id,
                 text="Selected program: " + self.bot.get_selected_program(chat_id=self.update.message.chat.id) # TODO: Check the functioning of the telegram bot with multiple users
             )
+        else:
+            self.bot.send_message(
+                chat_id=self.update.message.chat.id,
+                text="Program not valid. Operation aborted"
+            )
+            self.bot.state_machine.set_state(State.AUTHENTICATED)

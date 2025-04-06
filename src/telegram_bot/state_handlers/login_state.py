@@ -1,4 +1,5 @@
 from base_handler import BaseStateHandler
+from state_handlers.authenticated_state import AuthenticatedStateHandler
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -12,10 +13,8 @@ class LoginStateHandler(BaseStateHandler):
             SubStateLogin.USERNAME: self.get_password,
             SubStateLogin.PASSWORD: self.authenticate
         }
-        self.update = None
-        self.context = None
         
-        self.next_state = State.AUTHENTICATED
+        self.next_state = AuthenticatedStateHandler(bot=None)
         
         self.username = None
         self.password = None

@@ -29,7 +29,7 @@ class LoginStateHandler(BaseStateHandler):
 
         message = update.message
         
-        self.login_callbacks.get(self.bot.state_machine.get_substate_login(), self.default_handler)(message=message)
+        self.login_callbacks.get(self.bot.state_machine.get_substate_login(), super().default_handler)(message=message)
 
     def get_username(self, message: str):
         """

@@ -30,6 +30,8 @@ class StartedStateHandler(BaseStateHandler):
 
         self.next_state = EndStateHandler(bot=None)
 
+        self.resting = False # TODO: Implement the "resting state"
+
     async def handle_message(self, update: Update, context: CallbackContext):
         """
         Handles the message based on the substates

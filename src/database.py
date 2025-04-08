@@ -1,21 +1,27 @@
-import libsql_experimental as libsql
+import psycopg2
 import pandas as pd
 import bcrypt
 
+from pandas.errors import DatabaseError
 class Database:
     """
     Class for interacting with the database
     """
-    def __init__(self, db_url, db_auth_key):
+    def __init__(self, db_host, db_password, db_user, db_name, db_port):
         """
         Initialization of the database
         """
-        self.db_url = db_url
-        self.db_auth_key = db_auth_key
+        self.db_host = db_host
+        self.db_password = db_password
+        self.db_user = db_user
+        self.db_name = db_name
+        self.db_port = db_port
 
-        if (self.db_url is None) or (self.db_auth_key is None):
-            raise ValueError("DB_URL and DB_KEY must be set as environment variables")
         self.conn = None
+        self.cursor = None
+
+        if self.db_host is None or self.db_password is None or self.db_user is None or self.db_name is None or self.db_port is None:
+            raise ValueError("Error with the DB connection parameters")
 
         self.connect_to_db()
 
@@ -23,12 +29,22 @@ class Database:
         """
         Function to connect to the DB and make it ready to receive queries
         """
-        self.conn = libsql.connect(
-                "my_db.db",
-                sync_url=self.db_url,
-                auth_token=self.db_auth_key)
+        self.conn = psycopg2.connect(
+            host=self.db_host,
+            database=self.db_name,
+            user=self.db_user,
+            password=self.db_password,
+            port=self.db_port
+        )
 
-        self.conn.sync()
+        if self.conn is None:
+            raise DatabaseError("self.conn is None. Error with the DB")
+        
+        self.cursor = self.conn.cursor()
+        self.cursor.execute("SELECT version();")
+        db_version = self.cursor.fetchone()
+        print(f"Connected to database: {self.db_name} on {self.db_host} with version: {db_version[0]}")
+        self.conn.commit()
 
     def check_user(self, username : str, password : str) -> bool:
         """

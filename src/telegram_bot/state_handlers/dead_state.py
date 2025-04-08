@@ -23,7 +23,9 @@ class DeadStateHandler(BaseHandler):
 
         message = update.message
 
-        self.callbacks.get(message.text, super().default_handler)(message=message.text)
+        command = message.text.split()[0]
+
+        self.callbacks.get(command, super().default_handler)(message=command)
 
     # Callbacks
     def start(self, message: str):

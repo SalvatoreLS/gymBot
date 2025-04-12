@@ -28,7 +28,8 @@ class TelegramBot:
             db_url=db_url,
             db_auth_key=db_auth_key)
         
-        self.user_db = {}
+        self.user_db = {}   # Stores user data in memory
+        self.id_users = {}  # Maps the id of the user in DB with the chat_id (chat_id : user_id)
 
         self.state_handlers = {
             State.DEAD           :  DeadStateHandler(self),
@@ -109,8 +110,8 @@ class TelegramBot:
         username = update.message.from_user.username
         user_first_name = update.message.from_user.first_name
 
-        self.user_db[user_id] = {
-            "chat_id": update.message.chat.id,
+        # Telegram users data
+        self.user_db[user_id] = { # The chat_id is the user_id
             "username": username,
             "first_name": user_first_name
         }

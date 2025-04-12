@@ -41,9 +41,27 @@ class Exercise:
     Class for each single exercise
     """
     def __init__(self):
+        self.name = None
         self.sets = []
     
-    # TODO: Add functions to get exercise as formatted string
+    def fill_exercise(self, name: str):
+        self.name = name
+        # TODO: Find a good way for filling sets in this function on another
+    
+    def as_string(self):
+        """
+        Function to display an exercise as text
+        inside a telegram message.
+        """
+        string_exercise = ""
+
+        string_exercise += self.name + "\n"
+
+        # TODO: Complete this function and continue coding from here
+
+        for i in range(len(self.sets)):
+            string_exercise += f"Set {i+1}: "
+
 
 class DayProgram:
     """

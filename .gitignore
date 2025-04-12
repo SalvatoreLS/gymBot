@@ -26,3 +26,6 @@ TestResults.xml
 __pycache__/
 # Database data
 my_db.db*
+# Other files
+others/
+concurr_test/

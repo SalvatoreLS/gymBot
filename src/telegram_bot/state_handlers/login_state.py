@@ -10,12 +10,13 @@ class LoginStateHandler(BaseStateHandler):
         super().__init__(bot)
         self.login_callbacks = {
             SubStateLogin.NONE: self.get_username,
-            SubStateLogin.USERNAME: self.get_password,
-            SubStateLogin.PASSWORD: self.authenticate
+            SubStateLogin.USERNAME: self.get_password
+            # TODO: Check if the PASSWORD state requires a handler
         }
         
         self.next_state = AuthenticatedStateHandler(bot=None)
         
+        self.id = None
         self.username = None
         self.password = None
 
@@ -62,12 +63,14 @@ class LoginStateHandler(BaseStateHandler):
 
         self.password = message.text
 
-        if self.bot.check_user(self.username, self.password):
+        self.id = self.bot.check_user(self.username, self.password)
+        if self.id is not None:
             self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="Valid password. You are now logged in."
             )
             self.bot.state_machine.set_substate_login(SubStateLogin.PASSWORD)
+            self.authenticate()
             return
         else:
             self.retries += 1
@@ -90,13 +93,14 @@ class LoginStateHandler(BaseStateHandler):
                 self.bot.state_machine.set_substate_login(SubStateLogin.USERNAME)
                 return
         
-    def authenticate(self, message: str):
+    def authenticate(self):
         """
-        Handles the authentication
+        Completes the authentication process.
         """
         
         self.bot.state_machine.set_state(State.AUTHENTICATED)
         self.bot.state_machine.set_substate_login(SubStateLogin.AUTHENTICATED)
+        self.bot.id_users[self.update.message.from_user.id] = self.id # Maps chat_id to user_id (from DB)
         self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="You are now authenticated."

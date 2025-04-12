@@ -46,15 +46,15 @@ class Database:
         print(f"Connected to database: {self.db_name} on {self.db_host} with version: {db_version[0]}")
         self.conn.commit()
 
-    def check_user(self, username : str, password : str) -> bool:
+    def check_user(self, username : str, password : str) -> int:
         """
         Function to authorize a user and connect them to the right programs.
         Returns True if authentication is successful, otherwise False.
         """
+        # TODO: Edit this function to return the user id
         try:
-            cursor = self.conn.cursor()
-            cursor.execute("SELECT password_hash FROM users WHERE username = ?", (username,))
-            result = cursor.fetchone()
+            self.cursor.execute("SELECT password_hash FROM users WHERE username = ?", (username,))
+            result = self.cursor.fetchone()
 
             if result is None:
                 return False
@@ -74,11 +74,9 @@ class Database:
         Function to register a new user and register data on the DB
         """
         try:
-            cursor = self.conn.cursor()
-
             # Check if user already exists
-            cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
-            existing_user = cursor.fetchone()
+            self.cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+            existing_user = self.cursor.fetchone()
 
             if existing_user:
                 print("Username already existing on DB")
@@ -88,7 +86,7 @@ class Database:
             hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
             # Insert into DB
-            cursor.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hashed_password.decode()))
+            self.cursor.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hashed_password.decode()))
             self.conn.commit()
 
             return True

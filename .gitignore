@@ -28,4 +28,3 @@ __pycache__/
 my_db.db*
 # Other files
 others/
-concurr_test/

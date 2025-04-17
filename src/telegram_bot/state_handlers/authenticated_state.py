@@ -52,7 +52,6 @@ class AuthenticatedStateHandler(BaseHandler):
         # TODO: Implement the stats handler and the class for getting data
         #        and visualizing the data
         
-        # TODO: After shpw the markyp for commands
         self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Statistics finished",
@@ -65,8 +64,8 @@ class AuthenticatedStateHandler(BaseHandler):
         Displays the programs available for the user
         """
 
-        programs_str = self.bot.get_programs(
-            chat_id=self.update.message.chat.id,
+        programs_str = self.bot.get_string_programs(
+            chat_id=self.update.message.chat.id
         )
 
         self.bot.send_message(
@@ -79,13 +78,21 @@ class AuthenticatedStateHandler(BaseHandler):
         Handles the /list command.
         User asks for the list of programs
         """
-        # TODO: Retrieve the list of programs from the database
-        #       it is more detailed than just the name and id
+        programs_str = self.bot.get_programs_details(
+            chat_id=self.update.message.chat.id
+        )
+
+        self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Here are the details about programs:\n" + programs_str
+        )
 
     def help(self, message: str):
         """
         Handles the /help command.
         User asks for help
         """
-        # TODO: Implement the help handler
-        pass
+        self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="TODO"
+        )

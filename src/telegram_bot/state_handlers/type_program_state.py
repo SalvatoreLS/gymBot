@@ -23,7 +23,7 @@ class TypeProgramStateHandler(BaseStateHandler):
                                 program_id=message.text):
             self.bot.send_message(
                 chat_id=self.update.message.chat.id,
-                text="Selected program: " + self.bot.get_selected_program(chat_id=self.update.message.chat.id) # TODO: Check the functioning of the telegram bot with multiple users
+                text="Selected program: " + self.bot.get_selected_program(chat_id=self.update.message.chat.id)
             )
         else:
             self.bot.send_message(

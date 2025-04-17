@@ -2,6 +2,8 @@ from base_handler import BaseHandler
 
 from state_handlers.authenticated_state import AuthenticatedStateHandler
 
+from state_machine import State
+
 class EndStateHandler(BaseHandler):
     def __init__(self, bot):
         super().__init__(bot)
@@ -29,19 +31,28 @@ class EndStateHandler(BaseHandler):
         """
         Handles the /quit command.
         """
-        # TODO
-        pass
+        self.bot.state_machine.set_state(State.AUTHENTICATED)
+        self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Exited workout"
+        )
 
     def stats(self, message):
         """
         Handles the /stats command.
         """
         # TODO
-        pass
+        self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Not yet implemented - TODO"
+        )
 
     def suggestions(self, message):
         """
         Handles the /suggestins command.
         """
         # TODO
-        pass
+        self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Not yet implemented - TODO"
+        )

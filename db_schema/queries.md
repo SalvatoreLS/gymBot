@@ -109,3 +109,7 @@ JOIN exercise e ON ws.exercise_id = e.id
 WHERE w.id = :workout_id
 ORDER BY ws.sequence_number;
 ```
+
+### Get the last workout id
+```SQL
+SELECT

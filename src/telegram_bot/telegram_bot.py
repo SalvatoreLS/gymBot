@@ -78,29 +78,49 @@ class TelegramBot:
         """
         Checks if the username is already taken
         """
-        # TODO: Check if the username is on the DB 
-        return False
+        return self.database.check_username(username=username)
 
-    def check_user(self, username: str, password: str) -> bool:
+    def check_user(self, username: str, password: str) -> int|None:
         """
         Checks if the user exists in the database
         """
-        # TODO: Check if the user exists in the DB
-        return False
+        return self.database.check_user(username=username, password=password)
 
     def is_user_registered(self, user_id):
-        """
-        Checks if a user is registered in user_db
-        """
         return user_id in self.user_db
+
+    def get_string_programs(self, chat_id) -> str:
+        """Returns the available programs as a formatted string."""
+        returned_string = ""
+        programs = self.get_programs(chat_id)
+        if programs is None:
+            return "There are no programs."
+        for row in programs:
+            returned_string += f"{row[0]}: {row[1]}\n"
+        return returned_string
 
     def get_programs(self, chat_id):
         """
         Queries the database for the programs associated with the user
         """
-        # TODO: Implement the logic to get the programs from the database
-        # TODO: Return the program ids such that the user can select that
-        pass
+        return self.database.get_programs(self.id_users[chat_id])
+
+    def get_programs_details(self, chat_id) -> str:
+        """
+        Returns a more detailed list of programs when requested by user.
+        """
+        programs = self.database.get_programs_details(self.id_users[chat_id])
+        return self.program_details_to_string(program_details=programs)
+
+    def program_details_to_string(self, program_details) -> str:
+        returned_string = ""
+        header = False
+        for row in program_details:
+            if not header:
+                returned_string += f"{row[0]} - {row[1]}\n- {row[2]}\n"
+            else:
+                returned_string += f"{row[2]}\n"
+        return returned_string
 
     async def start(self, update: Update, context: CallbackContext) -> None:
         """
@@ -203,9 +223,12 @@ class TelegramBot:
         """
         Checks if the program is valid and sets it
         """
-        # TODO: Check if the program exists in the database
-        # and set it as the selected program
-        pass
+        if self.database.check_program(self.id_users[chat_id], program_id):
+            # 1. Retrieve the result of query self.cursor.fetchall()
+            # 2. Parse result to fill program class and subclasses
+
+            # 1)
+            
     
     def check_day(self, chat_id, day_id):
         """

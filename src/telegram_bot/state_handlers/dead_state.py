@@ -53,8 +53,11 @@ class DeadStateHandler(BaseHandler):
                 text="You are not registered. Please use /start to register."
             )
             return
-        
-        # TODO: define what to say here and answer the user
+
+        self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="TODO"
+        )
     
     def authenticate(self, message: str):
         """
@@ -89,7 +92,8 @@ class DeadStateHandler(BaseHandler):
         
         self.bot.send_message(
             chat_id=self.update.message.chat.id,
-            text="Here are the available commands:\n\n- /help\n- /auth\n- /commands\n- /settings"
+            text="Here are the available commands:\n\n- /help\n- /auth\n- /commands\n- /settings",
+            markup_keyboard=super().get_markup_keyboard()
         )
     
     def settings(self, message: str):
@@ -111,5 +115,5 @@ class DeadStateHandler(BaseHandler):
 
         self.bot.send_message(
             chat_id=self.update.message.chat.id,
-            text="Setting not implemented yet" # TODO: Implement some settings to customize the bot
+            text="Setting not implemented yet TODO ??"
         )

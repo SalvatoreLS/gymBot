@@ -11,7 +11,6 @@ class LoginStateHandler(BaseStateHandler):
         self.login_callbacks = {
             SubStateLogin.NONE: self.get_username,
             SubStateLogin.USERNAME: self.get_password
-            # TODO: Check if the PASSWORD state requires a handler
         }
         
         self.next_state = AuthenticatedStateHandler(bot=None)
@@ -40,7 +39,7 @@ class LoginStateHandler(BaseStateHandler):
         # The message received is the username
         self.username = message.text
 
-        if self.bot.db.check_username(self.username):
+        if self.bot.check_username(self.username):
             self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="Valid username. Please enter your password."

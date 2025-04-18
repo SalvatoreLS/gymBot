@@ -224,10 +224,7 @@ class TelegramBot:
         Checks if the program is valid and sets it
         """
         if self.database.check_program(self.id_users[chat_id], program_id):
-            # 1. Retrieve the result of query self.cursor.fetchall()
-            # 2. Parse result to fill program class and subclasses
-
-            # 1)
+            self.selected_program = self.database.get_selected_program()
             
     
     def check_day(self, chat_id, day_id):

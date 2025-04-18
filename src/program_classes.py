@@ -52,6 +52,9 @@ class Exercise:
     def set_extra_info(self, extra_info: str):
         self.extra_info = extra_info
     
+    def set_exercise_sets(self, new_sets: str[ExerciseSet]):
+        self.sets = new_sets
+
     def add_set(self, new_set: ExerciseSet):
         self.sets.append(new_set)
 
@@ -60,6 +63,9 @@ class Exercise:
         for i, s in enumerate(self.sets):
             string_exercise += f"  Set {i+1}: {s.to_string()}\n"
         return string_exercise
+
+    def get_last_set(self):
+        return self.sets[-1]
 
 class DayProgram:
     """

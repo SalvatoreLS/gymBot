@@ -2,6 +2,10 @@ import psycopg2
 import pandas as pd
 import bcrypt
 
+from typing import List, Tuple
+
+from program_classes import ExerciseSet, Exercise, DayProgram, Program
+
 from pandas.errors import DatabaseError
 class Database:
     """
@@ -164,6 +168,8 @@ class Database:
         # 1. Get all program_day_ids
         # 2. For each program_day_id get the last workout_id
         # 3. For the workout_id get all the sets performed
+        new_program = Program()
+
         try:
             self.cursor.execute("""
                                 SELECT program_day.id
@@ -181,9 +187,72 @@ class Database:
         try:
             for program_day_id in program_day_ids:
                 # Get last workout id
-                # CONTINUE FROM HERE
-    # TODO: Implement other functions to interact with the DB
+                self.cursor.execute("""
+                                    SELECT w.id
+                                    FROM workout w, workout_set ws, program_day_exercise pde
+                                    WHERE w.id = ws.workout_id AND ws.exercise_id = pde.exercise_id
+                                        AND user_id = ? AND program_day_id = ?)
+                                    ORDER BY workout_time DESC
+                                    LIMIT 1;
+                                    """, (user_id, program_day_id))
+                workout_id = self.cursor.fetchone()
 
+                self.cursor.execute("""
+                                    SELECT e.id, e.name, e.comment, e.extra_info,
+                                        ws.weight, ws.reps, ws.rest, ws.sequence_number
+                                    FROM exercise e, workout_set ws
+                                    WHERE e.id = workout_set.exercise_id
+                                        AND ws.workout_id = ?
+                                    ORDER BY ws.sequence_number;
+                                    """, (workout_id,))
+                
+                exercises = self.__parse_exercises(exercises=self.cursor.fetchall())
+
+                # TO BE CONTINUED: once get the list of exercises, put them in the program day
+                # and put the program day in the program ...
+
+
+    def __parse_exercises(self, exercises: List[Tuple]) -> List[Exercise]:
+        """
+        Takes the result of exercises query execution and fills an exercise structure.
+        It expects (id, name, comment, extra_info, weight, reps, rest, sequence_number).
+        """
+        prev_id = -1
+        exercises = []
+        sets = []
+    
+        for row in exercises:
+            if prev_id == row[0]:
+                sets.append(
+                    ExerciseSet().fill_set(
+                        weight=float(row[4]),
+                        rest=row[6],
+                        reps=row[5]
+                    )
+                )
+            else:
+                # Add sets to the previous exercise (completed)
+                exercises[-1].set_exercise_sets(sets)
+                # Clear sets to fill the new exercise
+                sets = []
+                exercises.append(
+                    self.__fill_exercise(row=row, exercise=Exercise()))
+                sets.append(
+                    ExerciseSet().fill_set(
+                        weight=float(row[4]),
+                        rest=row[6],
+                        reps=row[5]
+                    )
+                )
+        return exercises
+
+
+    def __fill_exercise(self, row, exercise):
+        exercise.set_id(row[0])
+        exercise.set_name(row[1])
+        exercise.set_comment(row[2])
+        exercise.set_extra_info(row[3])
+        return exercise
 
 """
 SELECT

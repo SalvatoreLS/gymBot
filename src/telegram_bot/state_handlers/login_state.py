@@ -1,5 +1,5 @@
-from base_handler import BaseStateHandler
-from state_handlers.authenticated_state import AuthenticatedStateHandler
+from telegram_bot.state_handlers.base_handler import BaseStateHandler
+from telegram_bot.state_handlers.authenticated_state import AuthenticatedStateHandler
 from telegram import Update
 from telegram.ext import CallbackContext
 

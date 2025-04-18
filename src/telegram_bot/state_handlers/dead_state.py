@@ -1,10 +1,10 @@
 from telegram import Update
 from telegram.ext import CallbackContext
-from base_handler import BaseHandler
-from state_handlers.login_state import LoginStateHandler
+from telegram_bot.state_handlers.base_handler import BaseStateHandler
+from telegram_bot.state_handlers.login_state import LoginStateHandler
 from state_machine import State, SubStateLogin
 
-class DeadStateHandler(BaseHandler):
+class DeadStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
         self.callbacks = {

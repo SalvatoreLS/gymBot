@@ -1,10 +1,10 @@
-from base_handler import BaseHandler
+from telegram_bot.state_handlers.base_handler import BaseStateHandler
 
-from state_handlers.authenticated_state import AuthenticatedStateHandler
+from telegram_bot.state_handlers.authenticated_state import AuthenticatedStateHandler
 
 from state_machine import State
 
-class EndStateHandler(BaseHandler):
+class EndStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
 

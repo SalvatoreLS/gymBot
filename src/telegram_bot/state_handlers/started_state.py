@@ -1,5 +1,5 @@
-from base_handler import BaseStateHandler
-from state_handlers.end_state import EndStateHandler
+from telegram_bot.state_handlers.base_handler import BaseStateHandler
+from telegram_bot.state_handlers.end_state import EndStateHandler
 
 from state_machine import State, SubStateUpdateExercise, SubStateUpdateSet
 

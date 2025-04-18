@@ -1,11 +1,11 @@
-from base_handler import BaseHandler
-from state_handlers.started_state import StartedStateHandler
+from telegram_bot.state_handlers.base_handler import BaseStateHandler
+from telegram_bot.state_handlers.started_state import StartedStateHandler
 from state_machine import State, SubStateUpdateSet, SubStateUpdateExercise
 
 from telegram import Update
 from telegram.ext import CallbackContext
 
-class ReadyStateHandler(BaseHandler):
+class ReadyStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
         

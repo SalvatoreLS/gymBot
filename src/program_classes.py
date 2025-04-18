@@ -1,6 +1,8 @@
 import pandas as pd
 import re
 
+from typing import List
+
 class ExerciseSet:
     """
     Class for each set of an exercise
@@ -52,7 +54,7 @@ class Exercise:
     def set_extra_info(self, extra_info: str):
         self.extra_info = extra_info
     
-    def set_exercise_sets(self, new_sets: str[ExerciseSet]):
+    def set_exercise_sets(self, new_sets: List[ExerciseSet]):
         self.sets = new_sets
 
     def add_set(self, new_set: ExerciseSet):
@@ -89,6 +91,12 @@ class DayProgram:
     def add_exercise(self, new_exercise: Exercise):
         self.exercises.append(new_exercise)
 
+    def set_exercises(self, new_exercises: List[Exercise]):
+        self.exercises = new_exercises
+
+    def get_last_exercise(self):
+        return self.exercises[-1]
+
     def to_string(self) -> str:
         return_string = f"\n=== Day {self.day_number}: {self.day_name} ===\n"
         for exercise in self.exercises:
@@ -110,6 +118,9 @@ class Program:
     
     def set_program_name(self, program_name: str):
         self.program_name = program_name
+
+    def set_days(self, new_days: List[DayProgram]):
+        self.days = new_days
     
     def add_day(self, new_day: DayProgram):
         self.days.append(new_day)

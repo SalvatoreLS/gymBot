@@ -164,25 +164,46 @@ class Database:
             print(f"Database error: {e}")
             return None
     
-    def get_selected_program(self, user_id, program_id):
+    def get_selected_program(self, user_id, program_id) -> Program|None:
         # 1. Get all program_day_ids
         # 2. For each program_day_id get the last workout_id
         # 3. For the workout_id get all the sets performed
         new_program = Program()
 
+        new_program_days = []
+
         try:
+            # Get program name
+            # TODO: check the return in case of single field selected and remove p.id
+            self.cursor.execute("""
+                                SELECT p.name, p.id
+                                FROM program p
+                                WHERE p.id = ? AND p.owner_id = ?;
+                                """, (program_id, user_id))
+            result = self.cursor.fetchone()
+        except Exception as e:
+            print(f"Database error while getting program name: {e}")
+            return None
+
+        # Set program name and id
+        new_program.set_id(id=program_id)
+        new_program.set_program_name(program_name=result[0])
+
+        try:
+            # Get program day ids
             self.cursor.execute("""
                                 SELECT program_day.id
                                 FROM program_day, program
                                 WHERE program_id = ?
                                 AND program.id = program_day.program_id
+                                ORDER BY program_day.day_number;
                                 """, (program_id,))
-            
-            program_day_ids = self.cursor.fetchall()
-        
+            result = self.cursor.fetchall()
         except Exception as e:
-            print(f"Database error: {e}")
+            print(f"Database error while getting program day ids: {e}")
             return None
+
+        program_day_ids = result
 
         try:
             for program_day_id in program_day_ids:
@@ -197,19 +218,39 @@ class Database:
                                     """, (user_id, program_day_id))
                 workout_id = self.cursor.fetchone()
 
+                # Get all info about exercises in last workout
                 self.cursor.execute("""
                                     SELECT e.id, e.name, e.comment, e.extra_info,
                                         ws.weight, ws.reps, ws.rest, ws.sequence_number
                                     FROM exercise e, workout_set ws
                                     WHERE e.id = workout_set.exercise_id
                                         AND ws.workout_id = ?
-                                    ORDER BY ws.sequence_number;
+                                    ORDER BY ws.sequence_number ASC;
                                     """, (workout_id,))
                 
+                # Parse results and collect formatted exercises
                 exercises = self.__parse_exercises(exercises=self.cursor.fetchall())
 
-                # TO BE CONTINUED: once get the list of exercises, put them in the program day
-                # and put the program day in the program ...
+                # Get Program Day details and fill the program
+                self.cursor.execute("""
+                                    SELECT pd.day_number, pd.name
+                                    FROM program_day pd
+                                    WHERE pd.program_id = ? AND pd.id = ?
+                                    ORDER BY day_number ASC;
+                                    """, (program_id, program_day_id))
+                
+                result = self.cursor.fetchone()
+
+                new_program_days.append(DayProgram())
+                new_program_days[-1].set_id(id=program_day_id)
+                new_program_days[-1].set_day_number(day_number=result[0])
+                new_program_days[-1].set_day_name(day_name=result[1])
+                new_program_days[-1].set_exercises(new_exercises=exercises)
+            
+            new_program.set_days(new_days=new_program_days)
+        except Exception as e:
+            print(f"Database error: {e}")
+            return None
 
 
     def __parse_exercises(self, exercises: List[Tuple]) -> List[Exercise]:
@@ -237,7 +278,7 @@ class Database:
                 sets = []
                 exercises.append(
                     self.__fill_exercise(row=row, exercise=Exercise()))
-                sets.append(
+                sets.append( # vv CHECK IF THIS IS CORRECT vv
                     ExerciseSet().fill_set(
                         weight=float(row[4]),
                         rest=row[6],

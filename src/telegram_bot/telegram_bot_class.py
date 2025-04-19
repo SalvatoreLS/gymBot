@@ -5,6 +5,8 @@ from database import Database
 from state_machine import StateMachine
 from state_machine import State
 
+from telegram_bot.state_handlers.state_graph import StateGraph
+
 # State handlers
 from telegram_bot.state_handlers.dead_state import DeadStateHandler
 from telegram_bot.state_handlers.login_state import LoginStateHandler
@@ -24,7 +26,7 @@ class TelegramBot:
                  db_host, db_password, db_user, db_name, db_port) -> None:
         self.token = bot_token
         self.app = Application.builder().token(self.token).build()
-        self.state_machine = StateMachine()
+        self.state_machine = {}
 
         self.database = Database(
             db_host=db_host,
@@ -36,6 +38,10 @@ class TelegramBot:
         
         self.user_db = {}   # Stores user data in memory
         self.id_users = {}  # Maps the id of the user in DB with the chat_id (chat_id : user_id)
+
+        self.app.add_handler(MessageHandler(filters.ALL, self.handle_message))
+
+        self.state_graph = StateGraph()
 
         self.state_handlers = {
             State.DEAD           :  DeadStateHandler(self),
@@ -50,18 +56,12 @@ class TelegramBot:
 
         self.selected_program = {}
         self.selected_day_id = {}
-
-        # Add command handlers
-        self.app.add_handler(CommandHandler("start", self.start))
-        self.app.add_handler(CommandHandler("help", self.help))
-        self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
-        self.app.add_handler(CallbackQueryHandler(self.button_click))
     
-    def send_message(self, chat_id, text, markup=None):
+    async def send_message(self, chat_id, text, markup=None):
         """
         Sends a message to the user
         """
-        self.app.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+        await self.app.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
 
     def add_user(self, user_id, chat_id, username, first_name):
         """
@@ -128,51 +128,18 @@ class TelegramBot:
                 returned_string += f"{row[2]}\n"
         return returned_string
 
-    async def start(self, update: Update, context: CallbackContext) -> None:
-        """
-        Handles /start command and shows a reply keyboard.
-        """
-        user_id = update.message.from_user.id
-        username = update.message.from_user.username
-        user_first_name = update.message.from_user.first_name
-
-        # Telegram users data
-        self.user_db[user_id] = { # The chat_id is the user_id
-            "username": username,
-            "first_name": user_first_name
-        }
-        await update.message.reply_text(f"Hello {user_first_name}, welcome to the bot!")
-
-        keyboard = [["/help", "/commands"], ["/settings", "/start"]]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-
-        await update.message.reply_text("Welcome to the telegram bot. Choose an option or type something", reply_markup=reply_markup)
-
-    async def help(self, update: Update, context: CallbackContext) -> None:
-        """
-        Handles /help command
-        """
-        await update.message.reply_text("Here is how I can help you...")
-        
-        keyboard = [["/help", "/commands"], ["/settings", "/start"]]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        
-        await update.message.reply_text("Choose an option or type something", reply_markup=reply_markup)
-
     async def handle_message(self, update: Update, context: CallbackContext) -> None:
         """
         Handles text messages from users
         """
         user_id = update.message.from_user.id
-        chat_id = update.message.chat.id
 
-        # Check if the user is in the database
-        if user_id not in self.user_db:
-            await update.message.reply_text("You are not registered. Please use /start to register.")
-            return
+        if user_id not in self.state_machine:
+            # Initialize the state machine for the user
+            self.state_machine[user_id] = StateMachine()
 
         # Get the user's state from the state machine
-        user_state = self.state_machine.get_state()
+        user_state = self.state_machine[update.message.from_user.id].get_state()
 
         # Handle the message based on the user's state
         handler = self.state_handlers.get(user_state)
@@ -245,3 +212,15 @@ class TelegramBot:
         """
         print("Bot is running...")
         self.app.run_polling()
+
+    def create_reply_markup(self, keyboard):
+        return ReplyKeyboardMarkup(
+            keyboard,
+            one_time_keyboard=True,
+            resize_keyboard=True)
+
+
+"""
+- Finish to convert single state_machine to multiple state_machines.
+- Remove message from callbacks or remove self.update. ...
+"""

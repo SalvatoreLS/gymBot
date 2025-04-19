@@ -12,7 +12,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
             "/stats"   : self.stats,
             "/help"    : self.help
         }
-
+        
     
     def to_string(self):
         return "authenticated"
@@ -25,12 +25,11 @@ class AuthenticatedStateHandler(BaseStateHandler):
         self.context = context
 
         message = update.message
-
-        # Get the command and call the corresponding function
         command = message.text.split()[0]
-        self.callbacks.get(command, super().default_handler)(message=message.text)
+
+        await self.callbacks.get(command, super().default_handler)(message=message.text)
     
-    def program(self, message: str):
+    async def program(self, message: str):
         """
         Handles the /program command.
         User asks for a program and later types the program name
@@ -38,14 +37,14 @@ class AuthenticatedStateHandler(BaseStateHandler):
         
         self.display_programs()
 
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Please type the program you want to start"
         )
 
-        self.bot.state_machine.set_state(State.TYPE_PROGRAM)
+        self.bot.state_machine[self.update.message.from_user.id].set_state(State.TYPE_PROGRAM)
 
-    def stats(self, message: str):
+    async def stats(self, message: str):
         """
         Handles the /stats command.
         User asks for the stats of a program
@@ -53,7 +52,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
         # TODO: Implement the stats handler and the class for getting data
         #        and visualizing the data
         
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Statistics finished",
             markup_keyboard=super().get_markup_keyboard()
@@ -74,7 +73,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
             text="Here are the available programs:\n" + programs_str
         )
     
-    def list(self, message: str):
+    async def list(self, message: str):
         """
         Handles the /list command.
         User asks for the list of programs
@@ -83,17 +82,17 @@ class AuthenticatedStateHandler(BaseStateHandler):
             chat_id=self.update.message.chat.id
         )
 
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Here are the details about programs:\n" + programs_str
         )
 
-    def help(self, message: str):
+    async def help(self, message: str):
         """
         Handles the /help command.
         User asks for help
         """
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="TODO"
         )

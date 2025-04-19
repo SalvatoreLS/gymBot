@@ -12,7 +12,6 @@ class ReadyStateHandler(BaseStateHandler):
             "/start_workout" : self.start_workout,
             "/cancel"        : self.cancel
         }
-
     
     def to_string(self):
         return "ready"
@@ -25,9 +24,9 @@ class ReadyStateHandler(BaseStateHandler):
         message = update.message
 
         command = message.text.split()[0]
-        self.callbacks.get(command, super().default_handler)(message=message.text)
+        await self.callbacks.get(command, super().default_handler)(message=message.text)
 
-    def start_workout(self, message):
+    async def start_workout(self, message):
         """
         Handles the /start_workout command.
         """
@@ -35,7 +34,7 @@ class ReadyStateHandler(BaseStateHandler):
         self.bot.state_machine.set_substate_update_set(SubStateUpdateSet.NONE)
         self.bot.state_machine.set_substate_update_exercise(SubStateUpdateExercise.NONE)
 
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Workout started!"
         )
@@ -46,11 +45,15 @@ class ReadyStateHandler(BaseStateHandler):
             text=...) # Get exercise from program
         """
     
-    def cancel(self, message):
+    async def cancel(self, message):
         """
         Handles the /cancel command.
         """
         self.bot.state_machine.set_state(State.AUTHENTICATED)
         # TODO: Add the possibility to hold the previously selected
         # program in memory and automatically ask the user to start that
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Workout cancelled."
+        )
     

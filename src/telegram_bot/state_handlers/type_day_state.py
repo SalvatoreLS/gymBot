@@ -21,14 +21,14 @@ class TypeDayStateHandler(BaseStateHandler):
         if self.bot.check_day(chat_id=self.update.message.chat.id,
                             day_id=message.text):
             self.bot.set_selected_day_id(day_id=message.text)
-            self.bot.send_message(
+            await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="Day correctly set. Workout ready to be started",
                 markup=super(self.next_state, self).get_reply_markup()
             )
         else:
             self.bot.clear_program()
-            self.bot.send_message(
+            await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="Wrong day specified. Operation aborted."
             )

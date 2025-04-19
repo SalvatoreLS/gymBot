@@ -14,12 +14,12 @@ class BaseStateHandler:
     def to_string(self):
         return "base"
 
-    def default_handler(self, message: str):
+    async def default_handler(self, message: str):
         """
         Default handler for all states
         """
-        self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+        await self.bot.send_message(
+            chat_id=self.update.effective_chat.id,
             text="Invalid command. Please try again."
         )
     
@@ -29,7 +29,7 @@ class BaseStateHandler:
         """
         return self.callbacks.keys()
 
-    def get_markup_keyboard(self):
+    def get_reply_markup(self):
         """
         Returns the markup keyboard for the user
         """

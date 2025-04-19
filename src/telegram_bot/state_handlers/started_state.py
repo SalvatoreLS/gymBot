@@ -47,83 +47,113 @@ class StartedStateHandler(BaseStateHandler):
         substate_update_exercise = self.bot.state_machine.get_substate_update_exercise()
 
         if substate_update_set != SubStateUpdateSet.NONE:
-            self.update_set_callbacks.get(substate_update_set, super().default_handler)(message=message.text)
+            await self.update_set_callbacks.get(substate_update_set, super().default_handler)(message=message.text)
             return
 
         if substate_update_exercise != SubStateUpdateExercise.NONE:
-            self.update_exercise_callbacks.get(substate_update_exercise, super().default_handler)(message=message.text)
+            await self.update_exercise_callbacks.get(substate_update_exercise, super().default_handler)(message=message.text)
             return
         
         command = message.text.split()[0]
         
-        self.callbacks.get(command, super().default_handler)(message=message.text)
+        await self.callbacks.get(command, super().default_handler)(message=message.text)
 
-    def prev_exercise(self, message):
+    async def prev_exercise(self, message):
         """
         Handles the /prev_exercise command.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Previous exercise - TODO"
+        )
 
-    def next_exercise(self, message):
+    async def next_exercise(self, message):
         """
         Handles the /next_exercise command.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Next exercise - TODO"
+        )
 
-    def prev_set(self, message):
+    async def prev_set(self, message):
         """
         Handles the /prev_set command.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Previous set - TODO"
+        )
 
-    def next_set(self, message):
+    async def next_set(self, message):
         # TODO: Implement the markup when the last exercise is finished
         """
         Handls the /next_set command.
         """
-        # TODO
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Next set - TODO"
+        )
     
-    def update_set(self, message):
+    async def update_set(self, message):
         """
         Handles the /update_set command.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Update set - TODO"
+        )
 
-    def update_exercise(self, message):
+    async def update_exercise(self, message):
         """
         Handles the /update_exercise command.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Update exercise - TODO"
+        )
 
-    def type_expression(self, message): 
+    async def type_expression(self, message): 
         """
         Handles the type_expression exercise substate.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Type expression - TODO"
+        )
 
-    def type_set(self, message):
+    async def type_set(self, message):
         """
         Handles the type_set set substate.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Type set - TODO"
+        )
 
-    def type_what(self, message):
+    async def type_what(self, message):
         """
         Handles the type_what set substate.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Type what - TODO"
+        )
 
-    def type_new_value(self, message):
+    async def type_new_value(self, message):
         """
         Handles the type_new_value set substate.
         """
         # TODO
-        pass
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Type new value - TODO"
+        )

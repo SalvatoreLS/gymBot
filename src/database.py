@@ -67,7 +67,7 @@ class Database:
         Returns True if authentication is successful, otherwise False.
         """
         try:
-            self.cursor.execute("SELECT id, password FROM gym_user WHERE username = ?", (username,))
+            self.cursor.execute("SELECT id, password FROM gym_user WHERE username = %s;", (username,))
             result = self.cursor.fetchone() # Returns a tuple (password_hash, id)
 
             if result is None:
@@ -87,7 +87,7 @@ class Database:
     
     def check_username(self, username: str) -> bool:
         try:
-            self.cursor.execute("SELECT id FROM gym_user WHERE username = ?", (username,))
+            self.cursor.execute("SELECT id FROM gym_user WHERE username = %s", (username,))
             result = self.cursor.fetchone()
 
             return True if result is not None else False
@@ -101,7 +101,7 @@ class Database:
         """
         try:
             # Check if user already exists
-            self.cursor.execute("SELECT id FROM gym_user WHERE username = ?", (username,))
+            self.cursor.execute("SELECT id FROM gym_user WHERE username = %s", (username,))
             existing_user = self.cursor.fetchone()
 
             if existing_user is not None:
@@ -112,7 +112,7 @@ class Database:
             hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
             # Insert into DB
-            self.cursor.execute("INSERT INTO gym_user (username, password_hash) VALUES (?, ?)", (username, hashed_password.decode()))
+            self.cursor.execute("INSERT INTO gym_user (username, password_hash) VALUES (%s, %s)", (username, hashed_password.decode()))
             self.conn.commit()
 
             return True
@@ -123,7 +123,7 @@ class Database:
     
     def get_programs(self, user_id):
         try:
-            self.cursor.execute("SELECT id, name FROM program WHERE owner_id = ?", (user_id))
+            self.cursor.execute("SELECT id, name FROM program WHERE owner_id = %s", (user_id))
             return self.cursor.fetchall()
         except Exception as e:
             print(f"Database error: {e}")
@@ -131,7 +131,7 @@ class Database:
 
     def get_programs_details(self, user_id) -> str:
         try:
-            self.cursor.execute("SELECT id FROM program WHERE owner_id = ?", (user_id,))
+            self.cursor.execute("SELECT id FROM program WHERE owner_id = %s", (user_id,))
             program_ids = self.cursor.fetchone()
         except Exception as e:
             print(f"Database error: {e}")
@@ -145,7 +145,7 @@ class Database:
                                     SELECT program_day.day_number, program_day.name, exercise.name
                                     FROM program_day, exercise, program_day_exercise
                                     WHERE program_day.program_id = program.id AND exercise.id = program_day_exercise.exercise_id
-                                        AND program_day_exercise.program_day_id = ?""", (program_id,))
+                                        AND program_day_exercise.program_day_id = %s""", (program_id,))
                 returned_string += self.program_details_to_string(self.cursor.fetchall())
         except Exception as e:
             print(f"Database error: {e}")
@@ -157,7 +157,7 @@ class Database:
             self.cursor.execute("""
                                 SELECT id
                                 FROM program
-                                WHERE owner_id = ? AND id = ?)
+                                WHERE owner_id = %s AND id = %s)
                                 """, (user_id, program_id))
             return self.cursor.fetchall() is not None
         except Exception as e:
@@ -178,7 +178,7 @@ class Database:
             self.cursor.execute("""
                                 SELECT p.name, p.id
                                 FROM program p
-                                WHERE p.id = ? AND p.owner_id = ?;
+                                WHERE p.id = %s AND p.owner_id = %s
                                 """, (program_id, user_id))
             result = self.cursor.fetchone()
         except Exception as e:
@@ -194,7 +194,7 @@ class Database:
             self.cursor.execute("""
                                 SELECT program_day.id
                                 FROM program_day, program
-                                WHERE program_id = ?
+                                WHERE program_id = %s
                                 AND program.id = program_day.program_id
                                 ORDER BY program_day.day_number;
                                 """, (program_id,))

@@ -22,19 +22,18 @@ class DeadStateHandler(BaseStateHandler):
         self.update = update
         self.context = context
 
-        message = update.message
+        command = update.message.text.split()[0]
 
-        command = message.text.split()[0]
-
-        self.callbacks.get(command, super().default_handler)(message=command)
+        await self.callbacks.get(command, super().default_handler)(message=command)
 
     # Callbacks
-    def start(self, message: str):
+    async def start(self, message: str):
         """
         Handles /start command and shows a reply keyboard.
         """
-        self.bot.state_machine.set_state(State.LOGIN)
-        self.bot.state_machine.set_substate_login(SubStateLogin.NONE)
+        print("Start command received by dead state handler")
+        self.bot.state_machine[self.update.message.from_user.id].set_state(State.LOGIN)
+        self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.NONE)
 
         self.bot.add_user(
             user_id=self.update.message.from_user.id,
@@ -43,78 +42,83 @@ class DeadStateHandler(BaseStateHandler):
             first_name=self.update.message.from_user.first_name
         )
 
-    def help(self, message: str):
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text="Welcome! Please enter your username to register."
+        )
+
+    async def help(self, message: str):
         """
         Handles /help command
         """
 
         if not self.bot.is_user_registered(self.update.message.from_user.id):
-            self.bot.send_message(
+            await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are not registered. Please use /start to register."
             )
             return
 
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="TODO"
         )
     
-    def authenticate(self, message: str):
+    async def authenticate(self, message: str):
         """
         Handles /auth command
         """
         
         if not self.bot.is_user_registered(self.update.message.from_user.id):
-            self.bot.send_message(
+            await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are not registered. Please use /start to register."
             )
             return
 
-        self.bot.state_machine.set_state(State.LOGIN)
-        self.bot.state_machine.set_substate_login(SubStateLogin.NONE)
-        self.bot.send_message(
+        self.bot.state_machine[self.update.message.from_user.id].set_state(State.LOGIN)
+        self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.NONE)
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Please enter your username"
         )
 
-    def commands(self, message: str):
+    async def commands(self, message: str):
         """
         Handles /commands command
         """
 
         if not self.bot.is_user_registered(self.update.message.from_user.id):
-            self.bot.send_message(
+            await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are not registered. Please use /start to register."
             )
             return
         
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Here are the available commands:\n\n- /help\n- /auth\n- /commands\n- /settings",
             markup_keyboard=super().get_markup_keyboard()
         )
     
-    def settings(self, message: str):
+    async def settings(self, message: str):
         """
         Handles /settings command
         """
 
         if not self.bot.is_user_registered(self.update.message.from_user.id):
-            self.bot.send_message(
+            await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are not registered. Please use /start to register."
             )
             return
         
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Here are the available settings:\n\n- /help\n- /auth\n- /commands\n- /settings"
         )
 
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Setting not implemented yet TODO ??"
         )

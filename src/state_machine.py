@@ -37,6 +37,7 @@ class StateMachine:
 
     # Main state
     def set_state(self, state: State):
+        print(self.state, " --> ", state)
         self.state = state
 
     def get_state(self) -> State:

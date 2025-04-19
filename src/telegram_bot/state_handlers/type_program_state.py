@@ -21,12 +21,12 @@ class TypeProgramStateHandler(BaseStateHandler):
 
         if self.bot.check_and_set_program(chat_id=self.update.message.chat.id,
                                 program_id=message.text):
-            self.bot.send_message(
+            await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="Selected program: " + self.bot.get_selected_program(chat_id=self.update.message.chat.id)
             )
         else:
-            self.bot.send_message(
+            await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="Program not valid. Operation aborted"
             )

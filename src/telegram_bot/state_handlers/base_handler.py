@@ -1,6 +1,8 @@
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from telegram_bot.state_handlers.state_graph import StateGraph
+
 class BaseStateHandler:
     def __init__(self, bot):
         self.bot = bot
@@ -8,6 +10,9 @@ class BaseStateHandler:
         self.update = None
         self.context = None
         self.callbacks = {}
+
+    def to_string(self):
+        return "base"
 
     def default_handler(self, message: str):
         """

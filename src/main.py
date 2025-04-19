@@ -9,8 +9,12 @@ def main():
     load_dotenv()
     tele_bot = TelegramBot(
         bot_token=os.getenv("BOT_TOKEN"),
-        db_url=os.getenv("DB_URL"),
-        db_auth_key=os.getenv("DB_KEY"))
+        db_host=os.getenv("DB_HOST"),
+        db_name=os.getenv("DB_NAME"),
+        db_user=os.getenv("DB_USER"),
+        db_password=os.getenv("DB_PASSWORD"),
+        db_port=os.getenv("DB_PORT")
+    )
 
     tele_bot.run()
 

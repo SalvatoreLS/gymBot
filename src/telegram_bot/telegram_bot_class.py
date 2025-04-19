@@ -19,14 +19,20 @@ class TelegramBot:
     """
     Class handling all the operations of the bot
     """
-    def __init__(self, bot_token, db_url, db_auth_key) -> None:
+    def __init__(self,
+                 bot_token,
+                 db_host, db_password, db_user, db_name, db_port) -> None:
         self.token = bot_token
         self.app = Application.builder().token(self.token).build()
         self.state_machine = StateMachine()
 
         self.database = Database(
-            db_url=db_url,
-            db_auth_key=db_auth_key)
+            db_host=db_host,
+            db_password=db_password,
+            db_user=db_user,
+            db_name=db_name,
+            db_port=db_port
+        )
         
         self.user_db = {}   # Stores user data in memory
         self.id_users = {}  # Maps the id of the user in DB with the chat_id (chat_id : user_id)

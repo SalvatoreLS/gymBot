@@ -1,6 +1,5 @@
 from state_machine import State
 
-from telegram_bot.state_handlers.type_day_state import TypeDayStateHandler
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
 
 from telegram import Update
@@ -10,7 +9,8 @@ class TypeProgramStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
 
-        self.next_state = TypeDayStateHandler(bot=None)
+    def to_string(self):
+        return "type_program"
 
     async def handle_message(self, update: Update, context):
 

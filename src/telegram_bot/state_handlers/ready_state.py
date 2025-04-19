@@ -1,5 +1,4 @@
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
-from telegram_bot.state_handlers.started_state import StartedStateHandler
 from state_machine import State, SubStateUpdateSet, SubStateUpdateExercise
 
 from telegram import Update
@@ -14,7 +13,9 @@ class ReadyStateHandler(BaseStateHandler):
             "/cancel"        : self.cancel
         }
 
-        self.next_state = StartedStateHandler(bot=None)
+    
+    def to_string(self):
+        return "ready"
     
     async def handle_message(self, update: Update, context: CallbackContext):
         

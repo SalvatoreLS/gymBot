@@ -1,5 +1,4 @@
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
-from telegram_bot.state_handlers.authenticated_state import AuthenticatedStateHandler
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -12,15 +11,16 @@ class LoginStateHandler(BaseStateHandler):
             SubStateLogin.NONE: self.get_username,
             SubStateLogin.USERNAME: self.get_password
         }
-        
-        self.next_state = AuthenticatedStateHandler(bot=None)
-        
+                
         self.id = None
         self.username = None
         self.password = None
 
         self.max_retries = 3
         self.retries = 0
+    
+    def to_string(self):
+        return "login"
 
     async def handle_message(self, update: Update, context: CallbackContext):
         

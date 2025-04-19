@@ -1,5 +1,3 @@
-from state_machine import State
-from telegram_bot.state_handlers.ready_state import ReadyStateHandler
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
 
 from telegram import Update
@@ -9,7 +7,9 @@ class TypeDayStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
 
-        self.next_state = ReadyStateHandler(bot=None)
+
+    def to_string(self):
+        return "type_day"
 
     async def handle_message(self, update: Update, context: CallbackContext):
         

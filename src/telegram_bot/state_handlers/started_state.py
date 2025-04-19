@@ -1,5 +1,4 @@
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
-from telegram_bot.state_handlers.end_state import EndStateHandler
 
 from state_machine import State, SubStateUpdateExercise, SubStateUpdateSet
 
@@ -28,9 +27,10 @@ class StartedStateHandler(BaseStateHandler):
             SubStateUpdateSet.TYPE_NEW_VALUE  : self.type_new_value
         }
 
-        self.next_state = EndStateHandler(bot=None)
-
         self.resting = False # TODO: Implement the "resting state"
+
+    def to_string(self):
+        return "started"
 
     async def handle_message(self, update: Update, context: CallbackContext):
         """

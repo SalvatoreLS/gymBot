@@ -2,7 +2,6 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 from state_machine import State
-from telegram_bot.state_handlers.type_program_state import TypeProgramStateHandler
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
 class AuthenticatedStateHandler(BaseStateHandler):
     def __init__(self, bot):
@@ -14,7 +13,9 @@ class AuthenticatedStateHandler(BaseStateHandler):
             "/help"    : self.help
         }
 
-        self.next_state = TypeProgramStateHandler(bot=None)
+    
+    def to_string(self):
+        return "authenticated"
 
     async def handle_message(self, update: Update, context: CallbackContext):
         """

@@ -1,7 +1,5 @@
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
 
-from telegram_bot.state_handlers.authenticated_state import AuthenticatedStateHandler
-
 from state_machine import State
 
 class EndStateHandler(BaseStateHandler):
@@ -14,7 +12,9 @@ class EndStateHandler(BaseStateHandler):
             "/suggestions"  : self.suggestions
         }
 
-        self.next_state = AuthenticatedStateHandler(bot=None)
+
+    def to_string(self):
+        return "end"
     
     async def handle_message(self, update, context):
         

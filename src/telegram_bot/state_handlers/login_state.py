@@ -31,15 +31,15 @@ class LoginStateHandler(BaseStateHandler):
 
         message = update.message
         
-        await self.login_callbacks.get(self.bot.state_machine.get_substate_login(), super().default_handler)(message=message)
+        await self.login_callbacks.get(self.bot.state_machine.get_substate_login(), super().default_handler)()
 
-    async def get_username(self, message):
+    async def get_username(self):
         """
         Handles the username input
         """
 
         # The message received is the username
-        self.username = message.text
+        self.username = self.update.message.text
 
         if self.bot.check_username(self.username):
             await self.bot.send_message(
@@ -57,12 +57,12 @@ class LoginStateHandler(BaseStateHandler):
             self.username = None
             return
     
-    async def get_password(self, message):
+    async def get_password(self):
         """
         Handles the password input
         """
 
-        self.password = message.text
+        self.password = self.update.message.text
 
         self.id = self.bot.check_user(self.username, self.password)
         if self.id is not None:

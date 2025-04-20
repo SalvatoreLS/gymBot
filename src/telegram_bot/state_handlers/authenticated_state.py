@@ -27,9 +27,9 @@ class AuthenticatedStateHandler(BaseStateHandler):
         message = update.message
         command = message.text.split()[0]
 
-        await self.callbacks.get(command, super().default_handler)(message=message.text)
+        await self.callbacks.get(command, super().default_handler)()
     
-    async def program(self, message: str):
+    async def program(self):
         """
         Handles the /program command.
         User asks for a program and later types the program name
@@ -44,7 +44,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
 
         self.bot.state_machine[self.update.message.from_user.id].set_state(State.TYPE_PROGRAM)
 
-    async def stats(self, message: str):
+    async def stats(self):
         """
         Handles the /stats command.
         User asks for the stats of a program
@@ -73,7 +73,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
             text="Here are the available programs:\n" + programs_str
         )
     
-    async def list(self, message: str):
+    async def list(self):
         """
         Handles the /list command.
         User asks for the list of programs
@@ -87,7 +87,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
             text="Here are the details about programs:\n" + programs_str
         )
 
-    async def help(self, message: str):
+    async def help(self):
         """
         Handles the /help command.
         User asks for help

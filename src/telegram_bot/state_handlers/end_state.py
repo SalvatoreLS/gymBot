@@ -1,3 +1,6 @@
+from telegram import Update
+from telegram.ext import CallbackContext
+
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
 
 from state_machine import State
@@ -16,7 +19,7 @@ class EndStateHandler(BaseStateHandler):
     def to_string(self):
         return "end"
     
-    async def handle_message(self, update, context):
+    async def handle_message(self, update: Update, context: CallbackContext):
         
         self.update = update
         self.context = context
@@ -25,9 +28,9 @@ class EndStateHandler(BaseStateHandler):
 
         command = message.text.split()[0]
 
-        await self.callbacks.get(command, super().default_handler)(message=message.text)
+        await self.callbacks.get(command, super().default_handler)()
     
-    async def quit(self, message):
+    async def quit(self):
         """
         Handles the /quit command.
         """
@@ -37,7 +40,7 @@ class EndStateHandler(BaseStateHandler):
             text="Exited workout"
         )
 
-    async def stats(self, message):
+    async def stats(self):
         """
         Handles the /stats command.
         """
@@ -47,7 +50,7 @@ class EndStateHandler(BaseStateHandler):
             text="Not yet implemented - TODO"
         )
 
-    async def suggestions(self, message):
+    async def suggestions(self):
         """
         Handles the /suggestins command.
         """

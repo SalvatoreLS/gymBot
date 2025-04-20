@@ -14,7 +14,7 @@ class BaseStateHandler:
     def to_string(self):
         return "base"
 
-    async def default_handler(self, message: str):
+    async def default_handler(self):
         """
         Default handler for all states
         """

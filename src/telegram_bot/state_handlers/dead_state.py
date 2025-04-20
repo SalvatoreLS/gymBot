@@ -24,10 +24,10 @@ class DeadStateHandler(BaseStateHandler):
 
         command = update.message.text.split()[0]
 
-        await self.callbacks.get(command, super().default_handler)(message=command)
+        await self.callbacks.get(command, super().default_handler)()
 
     # Callbacks
-    async def start(self, message: str):
+    async def start(self):
         """
         Handles /start command and shows a reply keyboard.
         """
@@ -47,7 +47,7 @@ class DeadStateHandler(BaseStateHandler):
             text="Welcome! Please enter your username to register."
         )
 
-    async def help(self, message: str):
+    async def help(self):
         """
         Handles /help command
         """
@@ -64,7 +64,7 @@ class DeadStateHandler(BaseStateHandler):
             text="TODO"
         )
     
-    async def authenticate(self, message: str):
+    async def authenticate(self):
         """
         Handles /auth command
         """
@@ -83,7 +83,7 @@ class DeadStateHandler(BaseStateHandler):
             text="Please enter your username"
         )
 
-    async def commands(self, message: str):
+    async def commands(self):
         """
         Handles /commands command
         """
@@ -101,7 +101,7 @@ class DeadStateHandler(BaseStateHandler):
             markup_keyboard=super().get_markup_keyboard()
         )
     
-    async def settings(self, message: str):
+    async def settings(self):
         """
         Handles /settings command
         """

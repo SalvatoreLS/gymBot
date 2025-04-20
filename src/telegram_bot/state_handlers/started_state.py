@@ -56,9 +56,9 @@ class StartedStateHandler(BaseStateHandler):
         
         command = message.text.split()[0]
         
-        await self.callbacks.get(command, super().default_handler)(message=message.text)
+        await self.callbacks.get(command, super().default_handler)()
 
-    async def prev_exercise(self, message):
+    async def prev_exercise(self):
         """
         Handles the /prev_exercise command.
         """
@@ -68,7 +68,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Previous exercise - TODO"
         )
 
-    async def next_exercise(self, message):
+    async def next_exercise(self):
         """
         Handles the /next_exercise command.
         """
@@ -78,7 +78,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Next exercise - TODO"
         )
 
-    async def prev_set(self, message):
+    async def prev_set(self):
         """
         Handles the /prev_set command.
         """
@@ -88,7 +88,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Previous set - TODO"
         )
 
-    async def next_set(self, message):
+    async def next_set(self):
         # TODO: Implement the markup when the last exercise is finished
         """
         Handls the /next_set command.
@@ -98,7 +98,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Next set - TODO"
         )
     
-    async def update_set(self, message):
+    async def update_set(self):
         """
         Handles the /update_set command.
         """
@@ -108,7 +108,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Update set - TODO"
         )
 
-    async def update_exercise(self, message):
+    async def update_exercise(self):
         """
         Handles the /update_exercise command.
         """
@@ -118,7 +118,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Update exercise - TODO"
         )
 
-    async def type_expression(self, message): 
+    async def type_expression(self): 
         """
         Handles the type_expression exercise substate.
         """
@@ -128,7 +128,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Type expression - TODO"
         )
 
-    async def type_set(self, message):
+    async def type_set(self):
         """
         Handles the type_set set substate.
         """
@@ -138,7 +138,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Type set - TODO"
         )
 
-    async def type_what(self, message):
+    async def type_what(self):
         """
         Handles the type_what set substate.
         """
@@ -148,7 +148,7 @@ class StartedStateHandler(BaseStateHandler):
             text="Type what - TODO"
         )
 
-    async def type_new_value(self, message):
+    async def type_new_value(self):
         """
         Handles the type_new_value set substate.
         """

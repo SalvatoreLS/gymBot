@@ -24,15 +24,15 @@ class ReadyStateHandler(BaseStateHandler):
         message = update.message
 
         command = message.text.split()[0]
-        await self.callbacks.get(command, super().default_handler)(message=message.text)
+        await self.callbacks.get(command, super().default_handler)()
 
-    async def start_workout(self, message):
+    async def start_workout(self):
         """
         Handles the /start_workout command.
         """
-        self.bot.state_machine.set_state(State.STARTED)
-        self.bot.state_machine.set_substate_update_set(SubStateUpdateSet.NONE)
-        self.bot.state_machine.set_substate_update_exercise(SubStateUpdateExercise.NONE)
+        self.bot.state_machine[self.update.message.from_user.id].set_state(State.STARTED)
+        self.bot.state_machine[self.update.message.from_user.id].set_substate_update_set(SubStateUpdateSet.NONE)
+        self.bot.state_machine[self.update.message.from_user.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
 
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
@@ -45,7 +45,7 @@ class ReadyStateHandler(BaseStateHandler):
             text=...) # Get exercise from program
         """
     
-    async def cancel(self, message):
+    async def cancel(self):
         """
         Handles the /cancel command.
         """

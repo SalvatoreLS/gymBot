@@ -12,7 +12,7 @@ class TypeProgramStateHandler(BaseStateHandler):
     def to_string(self):
         return "type_program"
 
-    async def handle_message(self, update: Update, context):
+    async def handle_message(self, update: Update, context: CallbackContext):
 
         self.update = update
         self.context = context

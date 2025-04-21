@@ -123,11 +123,17 @@ class Database:
     
     def get_programs(self, user_id):
         try:
-            self.cursor.execute("SELECT id, name FROM program WHERE owner_id = %s", (user_id))
-            return self.cursor.fetchall()
+            self.cursor.execute("SELECT id, name FROM program WHERE owner_id = %s", (user_id,))
+            return self.programs_to_string(self.cursor.fetchall())
         except Exception as e:
             print(f"Database error: {e}")
             return None
+        
+    def programs_to_string(self, programs) -> str:
+        returned_string = ""
+        for row in programs:
+            returned_string += f"{row[0]}) {row[1]}\n"
+        return returned_string
 
     def get_programs_details(self, user_id) -> str:
         try:
@@ -142,14 +148,28 @@ class Database:
         try:
             for program_id in program_ids:
                 self.cursor.execute("""
-                                    SELECT program_day.day_number, program_day.name, exercise.name
-                                    FROM program_day, exercise, program_day_exercise
-                                    WHERE program_day.program_id = program.id AND exercise.id = program_day_exercise.exercise_id
-                                        AND program_day_exercise.program_day_id = %s""", (program_id,))
+                                    SELECT pd.day_number, pd.name, e.name
+                                    FROM program_day pd, exercise e, program_day_exercise pde, program p
+                                    WHERE pd.program_id = p.id AND e.id = pde.exercise_id
+                                        AND pde.program_day_id = %s
+                                        AND p.owner_id = %s
+                                    ORDER BY pd.day_number""", (program_id, user_id))
                 returned_string += self.program_details_to_string(self.cursor.fetchall())
+                return returned_string
         except Exception as e:
             print(f"Database error: {e}")
             return None
+    
+    
+    def program_details_to_string(self, program_details) -> str:
+        returned_string = ""
+        day_number = 0
+        for row in program_details:
+            if day_number != row[0]:
+                returned_string += f"\n{row[0]}) {row[1]}\n"
+                day_number = row[0]
+            returned_string += f"\t- {row[2]}\n"
+        return returned_string[:-1]
     
 
     def check_program(self, user_id, program_id):
@@ -157,14 +177,14 @@ class Database:
             self.cursor.execute("""
                                 SELECT id
                                 FROM program
-                                WHERE owner_id = %s AND id = %s)
-                                """, (user_id, program_id))
+                                WHERE owner_id = %s AND id = %s
+                                """, (user_id, int(program_id)))
             return self.cursor.fetchall() is not None
         except Exception as e:
             print(f"Database error: {e}")
             return None
     
-    def get_selected_program(self, user_id, program_id) -> Program|None:
+    def get_selected_program(self, user_id: int, program_id: int) -> Program|None:
         # 1. Get all program_day_ids
         # 2. For each program_day_id get the last workout_id
         # 3. For the workout_id get all the sets performed
@@ -174,7 +194,6 @@ class Database:
 
         try:
             # Get program name
-            # TODO: check the return in case of single field selected and remove p.id
             self.cursor.execute("""
                                 SELECT p.name, p.id
                                 FROM program p
@@ -212,42 +231,45 @@ class Database:
                                     SELECT w.id
                                     FROM workout w, workout_set ws, program_day_exercise pde
                                     WHERE w.id = ws.workout_id AND ws.exercise_id = pde.exercise_id
-                                        AND user_id = ? AND program_day_id = ?)
+                                        AND user_id = %s AND program_day_id = %s
                                     ORDER BY workout_time DESC
                                     LIMIT 1;
-                                    """, (user_id, program_day_id))
+                                    """, (user_id, program_day_id[0]))
                 workout_id = self.cursor.fetchone()
+
+                self.cursor.fetchall()
 
                 # Get all info about exercises in last workout
                 self.cursor.execute("""
                                     SELECT e.id, e.name, e.comment, e.extra_info,
                                         ws.weight, ws.reps, ws.rest, ws.sequence_number
                                     FROM exercise e, workout_set ws
-                                    WHERE e.id = workout_set.exercise_id
-                                        AND ws.workout_id = ?
+                                    WHERE e.id = ws.exercise_id
+                                        AND ws.workout_id = %s
                                     ORDER BY ws.sequence_number ASC;
-                                    """, (workout_id,))
+                                    """, (workout_id[0],))
                 
                 # Parse results and collect formatted exercises
                 exercises = self.__parse_exercises(exercises=self.cursor.fetchall())
-
+                
                 # Get Program Day details and fill the program
                 self.cursor.execute("""
                                     SELECT pd.day_number, pd.name
                                     FROM program_day pd
-                                    WHERE pd.program_id = ? AND pd.id = ?
+                                    WHERE pd.program_id = %s AND pd.id = %s
                                     ORDER BY day_number ASC;
-                                    """, (program_id, program_day_id))
+                                    """, (program_id, program_day_id[0]))
                 
                 result = self.cursor.fetchone()
 
                 new_program_days.append(DayProgram())
-                new_program_days[-1].set_id(id=program_day_id)
+                new_program_days[-1].set_id(id=program_day_id[0])
                 new_program_days[-1].set_day_number(day_number=result[0])
                 new_program_days[-1].set_day_name(day_name=result[1])
                 new_program_days[-1].set_exercises(new_exercises=exercises)
             
             new_program.set_days(new_days=new_program_days)
+            return new_program
         except Exception as e:
             print(f"Database error: {e}")
             return None
@@ -259,12 +281,12 @@ class Database:
         It expects (id, name, comment, extra_info, weight, reps, rest, sequence_number).
         """
         prev_id = -1
-        exercises = []
-        sets = []
-    
+        exercises_list = []
+
         for row in exercises:
             if prev_id == row[0]:
-                sets.append(
+                # TODO: Sets are always empty
+                exercises_list[-1].add_set(
                     ExerciseSet().fill_set(
                         weight=float(row[4]),
                         rest=row[6],
@@ -272,20 +294,18 @@ class Database:
                     )
                 )
             else:
-                # Add sets to the previous exercise (completed)
-                exercises[-1].set_exercise_sets(sets)
-                # Clear sets to fill the new exercise
-                sets = []
-                exercises.append(
+                exercises_list.append(
                     self.__fill_exercise(row=row, exercise=Exercise()))
-                sets.append( # vv CHECK IF THIS IS CORRECT vv
-                    ExerciseSet().fill_set(
-                        weight=float(row[4]),
-                        rest=row[6],
-                        reps=row[5]
-                    )
+                new_set = ExerciseSet()
+                new_set.fill_set(
+                    weight=float(row[4]),
+                    rest=row[6],
+                    reps=row[5]
                 )
-        return exercises
+                exercises_list[-1].add_set(new_set)
+            prev_id = row[0]
+
+        return exercises_list
 
 
     def __fill_exercise(self, row, exercise):

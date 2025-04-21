@@ -31,7 +31,7 @@ class LoginStateHandler(BaseStateHandler):
 
         message = update.message
         
-        await self.login_callbacks.get(self.bot.state_machine.get_substate_login(), super().default_handler)()
+        await self.login_callbacks.get(self.bot.state_machine[self.update.message.from_user.id].get_substate_login(), super().default_handler)()
 
     async def get_username(self):
         """

@@ -98,35 +98,13 @@ class TelegramBot:
     def get_string_programs(self, chat_id) -> str:
         """Returns the available programs as a formatted string."""
         returned_string = ""
-        programs = self.get_programs(chat_id)
-        if programs is None:
-            return "There are no programs."
-        for row in programs:
-            returned_string += f"{row[0]}: {row[1]}\n"
-        return returned_string
-
-    def get_programs(self, chat_id):
-        """
-        Queries the database for the programs associated with the user
-        """
         return self.database.get_programs(self.id_users[chat_id])
 
     def get_programs_details(self, chat_id) -> str:
         """
         Returns a more detailed list of programs when requested by user.
         """
-        programs = self.database.get_programs_details(self.id_users[chat_id])
-        return self.program_details_to_string(program_details=programs)
-
-    def program_details_to_string(self, program_details) -> str:
-        returned_string = ""
-        header = False
-        for row in program_details:
-            if not header:
-                returned_string += f"{row[0]} - {row[1]}\n- {row[2]}\n"
-            else:
-                returned_string += f"{row[2]}\n"
-        return returned_string
+        return self.database.get_programs_details(self.id_users[chat_id])
 
     async def handle_message(self, update: Update, context: CallbackContext) -> None:
         """
@@ -167,11 +145,11 @@ class TelegramBot:
         """
         self.selected_program = program
 
-    def get_selected_program(self): # TODO: check if chat_id is needed based on how the bot interacts with multiple users
+    def get_selected_program(self):
         """
         Returns the selected program ID
         """
-        return self.selected_program
+        return self.selected_program.to_string()
 
     def clear_program(self):
         """
@@ -196,15 +174,22 @@ class TelegramBot:
         """
         Checks if the program is valid and sets it
         """
-        if self.database.check_program(self.id_users[chat_id], program_id):
-            self.selected_program = self.database.get_selected_program()
+        try:
+            program_id = int(program_id)
+        except ValueError:
+            return False
+        if self.database.check_program(self.id_users[chat_id], int(program_id)):
+            self.selected_program = self.database.get_selected_program(self.id_users[chat_id], int(program_id))
+            print("Program valid")
+            return True
+        return False
             
     
     def check_day(self, chat_id, day_id):
         """
         Checks if the day specified is in the selected program.
         """
-        pass
+        # TODO: define a dictionary of programs and change the code before
 
     def run(self) -> None:
         """

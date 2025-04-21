@@ -35,7 +35,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
         User asks for a program and later types the program name
         """
         
-        self.display_programs()
+        await self.display_programs()
 
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
@@ -59,7 +59,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
         )
 
 
-    def display_programs(self):
+    async def display_programs(self):
         """
         Displays the programs available for the user
         """
@@ -68,7 +68,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
             chat_id=self.update.message.chat.id
         )
 
-        self.bot.send_message(
+        await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Here are the available programs:\n" + programs_str
         )

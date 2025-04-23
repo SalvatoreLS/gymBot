@@ -12,9 +12,9 @@ class State(Enum):
 
 class SubStateUpdateSet(Enum):
     NONE = 0
-    TYPE_SET = 1 # User types which set to update (1, 2, 3, 4, ..., current)
-    TYPE_WHAT = 2 # User types what to update (reps, weight, etc.)
-    TYPE_NEW_VALUE = 3 # User types the new value for the exercise
+    TYPE_SET = 1          # User types which set to update (1, 2, 3, 4, ..., current)
+    TYPE_WHAT = 2         # User types what to update (reps, weight, etc.)
+    TYPE_NEW_VALUE = 3    # User types the new value for the exercise
 
 class SubStateLogin(Enum):
     NONE = 0
@@ -24,7 +24,7 @@ class SubStateLogin(Enum):
 
 class SubStateUpdateExercise(Enum):
     NONE = 0
-    TYPE_EXPRESSION = 1 # User types the expression for updating the exercise
+    TYPE_EXPRESSION = 1   # User types the expression for updating the exercise
 
 class StateMachine:
     def __init__(self):
@@ -32,8 +32,6 @@ class StateMachine:
         self.substate_update_set = SubStateUpdateSet.NONE
         self.substate_update_exercise = SubStateUpdateExercise.NONE
         self.substate_login = SubStateLogin.NONE
-
-    # Setters and Getters
 
     # Main state
     def set_state(self, state: State):

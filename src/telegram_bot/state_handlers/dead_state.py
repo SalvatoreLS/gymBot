@@ -31,7 +31,6 @@ class DeadStateHandler(BaseStateHandler):
         """
         Handles /start command and shows a reply keyboard.
         """
-        print("Start command received by dead state handler")
         self.bot.state_machine[self.update.message.from_user.id].set_state(State.LOGIN)
         self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.NONE)
 

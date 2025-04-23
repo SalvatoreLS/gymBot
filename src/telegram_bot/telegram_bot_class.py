@@ -1,5 +1,5 @@
 from telegram import ReplyKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
+from telegram.ext import Application, MessageHandler, filters, CallbackContext
 
 from database import Database
 from state_machine import StateMachine
@@ -203,9 +203,3 @@ class TelegramBot:
             keyboard,
             one_time_keyboard=True,
             resize_keyboard=True)
-
-
-"""
-- Finish to convert single state_machine to multiple state_machines.
-- Remove message from callbacks or remove self.update. ...
-"""

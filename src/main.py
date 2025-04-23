@@ -1,5 +1,4 @@
 from telegram_bot.telegram_bot_class import TelegramBot
-from database import Database
 
 import os
 from dotenv import load_dotenv

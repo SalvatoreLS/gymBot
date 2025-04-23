@@ -68,7 +68,7 @@ class Database:
         """
         try:
             self.cursor.execute("SELECT id, password FROM gym_user WHERE username = %s;", (username,))
-            result = self.cursor.fetchone() # Returns a tuple (password_hash, id)
+            result = self.cursor.fetchone() # Returns a tuple (id, password_hash)
 
             if result is None:
                 return None
@@ -185,9 +185,11 @@ class Database:
             return None
     
     def get_selected_program(self, user_id: int, program_id: int) -> Program|None:
-        # 1. Get all program_day_ids
-        # 2. For each program_day_id get the last workout_id
-        # 3. For the workout_id get all the sets performed
+        """
+        1. Get all program_day_ids
+        2. For each program_day_id get the last workout_id
+        3. For the workout_id get all the sets performed
+        """
         new_program = Program()
 
         new_program_days = []
@@ -278,7 +280,7 @@ class Database:
     def __parse_exercises(self, exercises: List[Tuple]) -> List[Exercise]:
         """
         Takes the result of exercises query execution and fills an exercise structure.
-        It expects (id, name, comment, extra_info, weight, reps, rest, sequence_number).
+        It expects (id, name, comment, extra_info, weight, reps, rest, sequence_number)
         """
         prev_id = -1
         exercises_list = []
@@ -314,38 +316,3 @@ class Database:
         exercise.set_comment(row[2])
         exercise.set_extra_info(row[3])
         return exercise
-
-"""
-SELECT
-    pd.day_number,
-    pd.name AS program_day_name,
-    e.id AS exercise_id,
-    e.name AS exercise_name,
-    e.comment,
-    e.extra_info,
-    ws.weight,
-    ws.reps,
-    ws.rest,
-    ws.sequence_number,
-    w.workout_time,
-    w.duration
-FROM program p
-JOIN program_day pd ON pd.program_id = p.id
-JOIN program_day_exercise pde ON pde.program_day_id = pd.id
-JOIN exercise e ON e.id = pde.exercise_id
-
--- Join performed workouts (optional, may be null if not yet performed)
-LEFT JOIN workout_set ws ON ws.exercise_id = e.id
-LEFT JOIN workout w ON w.id = ws.workout_id AND w.user_id = p.owner_id
-
-WHERE p.id = 1 AND p.owner_id = 1
-ORDER BY pd.day_number, e.id, ws.sequence_number;
-
-day_number | program_day_name | exercise_id | exercise_name |         comment          |          extra_info           | weight | reps | rest | sequence_number |        workout_time        | duration 
-------------+------------------+-------------+---------------+--------------------------+-------------------------------+--------+------+------+-----------------+----------------------------+----------
-          1 | Push Day         |           1 | Bench Press   | Barbell chest press      | Recommended warm-up included  |     50 |   10 |   90 |               1 | 2025-04-15 14:28:28.472151 |       60
-          1 | Push Day         |           1 | Bench Press   | Barbell chest press      | Recommended warm-up included  |     55 |    8 |   90 |               2 | 2025-04-17 14:28:28.472151 |       70
-          1 | Push Day         |           2 | Squat         | Barbell back squat       | Use rack for safety           |     80 |    8 |  120 |               2 | 2025-04-15 14:28:28.472151 |       60
-          2 | Pull Day         |           3 | Deadlift      | Classic compound lift    | Maintain form to avoid injury |    100 |    5 |  180 |               1 |                            |         
-          2 | Pull Day         |           4 | Pull-up       | Bodyweight back exercise | Add weight if too easy        |      0 |   12 |   60 |               1 | 2025-04-17 14:28:28.472151 |       70
-"""

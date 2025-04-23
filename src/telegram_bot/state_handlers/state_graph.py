@@ -1,17 +1,4 @@
-"""
-from telegram_bot.state_handlers.authenticated_state import AuthenticatedStateHandler
-from telegram_bot.state_handlers.dead_state import DeadStateHandler
-from telegram_bot.state_handlers.end_state import EndStateHandler
-from telegram_bot.state_handlers.login_state import LoginStateHandler
-from telegram_bot.state_handlers.ready_state import ReadyStateHandler
-from telegram_bot.state_handlers.started_state import StartedStateHandler
-from telegram_bot.state_handlers.type_day_state import TypeDayStateHandler
-from telegram_bot.state_handlers.type_program_state import TypeProgramStateHandler
-"""
-
 from utils import resolve_class
-from typing import Type
-
 class StateGraph:
     def __init__(self):
 

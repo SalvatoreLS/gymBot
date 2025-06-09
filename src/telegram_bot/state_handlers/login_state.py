@@ -31,7 +31,7 @@ class LoginStateHandler(BaseStateHandler):
 
         message = update.message
         
-        await self.login_callbacks.get(self.bot.state_machine[self.update.message.from_user.id].get_substate_login(), super().default_handler)()
+        await self.login_callbacks.get(self.bot.state_machine[self.update.message.chat.id].get_substate_login(), super().default_handler)()
 
     async def get_username(self):
         """
@@ -46,14 +46,14 @@ class LoginStateHandler(BaseStateHandler):
                 chat_id=self.update.message.chat.id,
                 text="Valid username. Please enter your password."
             )
-            self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.USERNAME) # Username present
+            self.bot.state_machine[self.update.message.chat.id].set_substate_login(SubStateLogin.USERNAME) # Username present
             return
         else:
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="Username not existing. Please enter a valid username."
             )
-            self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.NONE)
+            self.bot.state_machine[self.update.message.chat.id].set_substate_login(SubStateLogin.NONE)
             self.username = None
             return
     
@@ -70,7 +70,7 @@ class LoginStateHandler(BaseStateHandler):
                 chat_id=self.update.message.chat.id,
                 text="Valid password. You are now logged in."
             )
-            self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.PASSWORD)
+            self.bot.state_machine[self.update.message.chat.id].set_substate_login(SubStateLogin.PASSWORD)
             await self.authenticate()
             return
         else:
@@ -81,16 +81,16 @@ class LoginStateHandler(BaseStateHandler):
                     text="Too many attempts. Please try again later."
                 )
                 self.bot.remove_user(
-                    user_id=self.update.message.from_user.id
+                    user_id=self.update.message.chat.id
                 )
-                self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.NONE)
+                self.bot.state_machine[self.update.message.chat.id].set_substate_login(SubStateLogin.NONE)
                 return
             else:
                 await self.bot.send_message(
                     chat_id=self.update.message.chat.id,
                     text="Invalid password. Please try again. ({} attempts left)".format(self.max_retries - self.retries)
                 )
-                self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.USERNAME)
+                self.bot.state_machine[self.update.message.chat.id].set_substate_login(SubStateLogin.USERNAME)
                 return
         
     async def authenticate(self):
@@ -98,9 +98,9 @@ class LoginStateHandler(BaseStateHandler):
         Completes the authentication process.
         """
         
-        self.bot.state_machine[self.update.message.from_user.id].set_state(State.AUTHENTICATED)
-        self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.AUTHENTICATED)
-        self.bot.id_users[self.update.message.from_user.id] = self.id # Maps chat_id to user_id (from DB)
+        self.bot.state_machine[self.update.message.chat.id].set_state(State.AUTHENTICATED)
+        self.bot.state_machine[self.update.message.chat.id].set_substate_login(SubStateLogin.AUTHENTICATED)
+        self.bot.id_users[self.update.message.chat.id] = self.id # Maps chat_id to user_id (from DB)
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="You are now authenticated."

@@ -110,14 +110,14 @@ class TelegramBot:
         """
         Handles text messages from users
         """
-        user_id = update.message.from_user.id
+        user_id = update.message.chat.id
 
         if user_id not in self.state_machine:
             # Initialize the state machine for the user
             self.state_machine[user_id] = StateMachine()
 
         # Get the user's state from the state machine
-        user_state = self.state_machine[update.message.from_user.id].get_state()
+        user_state = self.state_machine[update.message.chat.id].get_state()
 
         # Handle the message based on the user's state
         handler = self.state_handlers.get(user_state)

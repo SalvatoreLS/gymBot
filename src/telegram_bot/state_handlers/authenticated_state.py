@@ -42,7 +42,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
             text="Please type the program you want to start"
         )
 
-        self.bot.state_machine[self.update.message.from_user.id].set_state(State.TYPE_PROGRAM)
+        self.bot.state_machine[self.update.message.chat.id].set_state(State.TYPE_PROGRAM)
 
     async def stats(self):
         """

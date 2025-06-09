@@ -30,9 +30,9 @@ class ReadyStateHandler(BaseStateHandler):
         """
         Handles the /start_workout command.
         """
-        self.bot.state_machine[self.update.message.from_user.id].set_state(State.STARTED)
-        self.bot.state_machine[self.update.message.from_user.id].set_substate_update_set(SubStateUpdateSet.NONE)
-        self.bot.state_machine[self.update.message.from_user.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
+        self.bot.state_machine[self.update.message.chat.id].set_state(State.STARTED)
+        self.bot.state_machine[self.update.message.chat.id].set_substate_update_set(SubStateUpdateSet.NONE)
+        self.bot.state_machine[self.update.message.chat.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
 
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,

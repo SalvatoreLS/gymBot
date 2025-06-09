@@ -31,11 +31,11 @@ class DeadStateHandler(BaseStateHandler):
         """
         Handles /start command and shows a reply keyboard.
         """
-        self.bot.state_machine[self.update.message.from_user.id].set_state(State.LOGIN)
-        self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.NONE)
+        self.bot.state_machine[self.update.message.chat.id].set_state(State.LOGIN)
+        self.bot.state_machine[self.update.message.chat.id].set_substate_login(SubStateLogin.NONE)
 
         self.bot.add_user(
-            user_id=self.update.message.from_user.id,
+            user_id=self.update.message.chat.id,
             chat_id=self.update.message.chat.id,
             username=self.update.message.from_user.username,
             first_name=self.update.message.from_user.first_name
@@ -51,7 +51,7 @@ class DeadStateHandler(BaseStateHandler):
         Handles /help command
         """
 
-        if not self.bot.is_user_registered(self.update.message.from_user.id):
+        if not self.bot.is_user_registered(self.update.message.chat.id):
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are not registered. Please use /start to register."
@@ -68,15 +68,15 @@ class DeadStateHandler(BaseStateHandler):
         Handles /auth command
         """
         
-        if not self.bot.is_user_registered(self.update.message.from_user.id):
+        if not self.bot.is_user_registered(self.update.message.chat.id):
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are not registered. Please use /start to register."
             )
             return
 
-        self.bot.state_machine[self.update.message.from_user.id].set_state(State.LOGIN)
-        self.bot.state_machine[self.update.message.from_user.id].set_substate_login(SubStateLogin.NONE)
+        self.bot.state_machine[self.update.message.chat.id].set_state(State.LOGIN)
+        self.bot.state_machine[self.update.message.chat.id].set_substate_login(SubStateLogin.NONE)
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Please enter your username"
@@ -87,7 +87,7 @@ class DeadStateHandler(BaseStateHandler):
         Handles /commands command
         """
 
-        if not self.bot.is_user_registered(self.update.message.from_user.id):
+        if not self.bot.is_user_registered(self.update.message.chat.id):
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are not registered. Please use /start to register."
@@ -105,7 +105,7 @@ class DeadStateHandler(BaseStateHandler):
         Handles /settings command
         """
 
-        if not self.bot.is_user_registered(self.update.message.from_user.id):
+        if not self.bot.is_user_registered(self.update.message.chat.id):
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are not registered. Please use /start to register."

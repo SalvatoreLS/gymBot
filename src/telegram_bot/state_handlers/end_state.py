@@ -34,7 +34,7 @@ class EndStateHandler(BaseStateHandler):
         """
         Handles the /quit command.
         """
-        self.bot.state_machine[self.update.message.from_user.id].set_state(State.AUTHENTICATED)
+        self.bot.state_machine[self.update.message.chat.id].set_state(State.AUTHENTICATED)
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Exited workout"

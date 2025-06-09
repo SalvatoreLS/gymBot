@@ -139,36 +139,37 @@ class TelegramBot:
 
         await query.edit_message_text(text=responses.get(query.data, "Invalid choice."))
 
-    def set_selected_program(self, program):
+    def set_selected_program(self, program, chat_id=None):
         """
         Sets the selected program ID
         """
-        self.selected_program = program
+        self.selected_program[chat_id] = program
 
-    def get_selected_program(self):
+    def get_selected_program(self, chat_id=None) -> str:
         """
         Returns the selected program ID
         """
-        return self.selected_program.to_string()
+        return self.selected_program[chat_id].to_string()
 
-    def clear_program(self):
+    def clear_program(self, chat_id=None):
         """
         Sets program to none.
         """
-        self.selected_program = None
-        self.selected_day_id = None
+        self.selected_program[chat_id] = None
+        self.selected_day_id[chat_id] = None
     
-    def set_selected_day_id(self, day_id):
+    def set_selected_day_id(self, day_id: str, chat_id=None):
         """
         Sets the selected day ID
         """
-        self.selected_day_id = day_id
+        day_id = int(day_id) - 1
+        self.selected_day_id[chat_id] = day_id
 
-    def get_selected_day_id(self):
+    def get_selected_day_id(self, chat_id=None) -> int:
         """
         Returns the selected day ID
         """
-        return self.selected_day_id
+        return self.selected_day_id[chat_id]
     
     def check_and_set_program(self, chat_id, program_id):
         """
@@ -179,17 +180,24 @@ class TelegramBot:
         except ValueError:
             return False
         if self.database.check_program(self.id_users[chat_id], int(program_id)):
-            self.selected_program = self.database.get_selected_program(self.id_users[chat_id], int(program_id))
+            self.selected_program[chat_id] = self.database.get_selected_program(self.id_users[chat_id], int(program_id))
             print("Program valid")
             return True
         return False
             
     
-    def check_day(self, chat_id, day_id):
+    def check_day(self, chat_id, day_id: str) -> bool:
         """
         Checks if the day specified is in the selected program.
         """
-        # TODO: define a dictionary of programs and change the code before
+        try:
+            day_id = int(day_id) - 1
+        except ValueError:
+            return False
+        
+        if self.selected_program is not None:
+            return len(self.selected_program[chat_id].days) > day_id and day_id >= 0
+        return False
 
     def run(self) -> None:
         """

@@ -23,7 +23,7 @@ class TypeProgramStateHandler(BaseStateHandler):
                                 program_id=message.text):
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
-                text="Selected program: " + self.bot.get_selected_program()
+                text="Selected program: " + self.bot.get_selected_program(self.update.message.chat.id)
             )
             self.bot.state_machine[self.update.message.chat.id].set_state(State.TYPE_DAY)
         else:

@@ -18,13 +18,13 @@ class TypeDayStateHandler(BaseStateHandler):
 
         message = self.update.message
 
-        if self.bot.check_day(chat_id=self.update.message.chat.id,
+        if self.bot.check_day(chat_id=message.chat.id,
                             day_id=message.text):
             self.bot.set_selected_day_id(day_id=message.text)
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="Day correctly set. Workout ready to be started",
-                markup=super(self.next_state, self).get_reply_markup()
+                markup=super(self.next_state, self).get_reply_markup() # TOFIX
             )
         else:
             self.bot.clear_program()

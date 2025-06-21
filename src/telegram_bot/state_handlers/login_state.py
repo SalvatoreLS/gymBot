@@ -4,6 +4,8 @@ from telegram.ext import CallbackContext
 
 from state_machine import State, SubStateLogin
 
+from utils import get_reply_markup
+
 class LoginStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
@@ -19,7 +21,8 @@ class LoginStateHandler(BaseStateHandler):
         self.max_retries = 3
         self.retries = 0
 
-        self.next_state = self.bot.state_graph.get_next_state(self.to_string())
+        self.next_state = super().get_next_state()
+        # self.bot.state_graph.get_next_state(self.to_string())
     
     def to_string(self):
         return "login"
@@ -31,7 +34,7 @@ class LoginStateHandler(BaseStateHandler):
 
         message = update.message
         
-        await self.login_callbacks.get(self.bot.state_machine[self.update.message.chat.id].get_substate_login(), super().default_handler)()
+        await self.login_callbacks.get(self.bot.state_machine[message.chat.id].get_substate_login(), super().default_handler)()
 
     async def get_username(self):
         """
@@ -106,8 +109,6 @@ class LoginStateHandler(BaseStateHandler):
             text="You are now authenticated."
         )
         
-        # TODO: Fix the reply markup
-        # markup = super(type(self.next_state), self.next_state).get_reply_markup()
         keyboard = [['/program', '/list'],['/stats', '/help']]
         markup = self.bot.create_reply_markup(keyboard=keyboard)
         await self.bot.send_message(

@@ -3,6 +3,8 @@ from telegram.ext import CallbackContext
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
 from state_machine import State, SubStateLogin
 
+from utils import get_reply_markup
+
 class DeadStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
@@ -13,6 +15,8 @@ class DeadStateHandler(BaseStateHandler):
             "/commands" : self.commands,
             "/settings" : self.settings
         }
+
+        self.next_state = super().get_next_state()
 
     def to_string(self):
         return "dead"
@@ -97,7 +101,7 @@ class DeadStateHandler(BaseStateHandler):
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Here are the available commands:\n\n- /help\n- /auth\n- /commands\n- /settings",
-            markup_keyboard=super().get_markup_keyboard()
+            markup_keyboard=get_reply_markup(self.next_state)
         )
     
     async def settings(self):

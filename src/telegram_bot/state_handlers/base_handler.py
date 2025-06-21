@@ -22,21 +22,33 @@ class BaseStateHandler:
             chat_id=self.update.effective_chat.id,
             text="Invalid command. Please try again."
         )
+
+    def get_next_state(self):
+        """
+        Returns the next state of the state machine.
+        """
+        return self.bot.state_graph.get_next_state(self.to_string())
     
     def get_callbacks(self):
         """
         Returns the callbacks for the state
         """
-        return self.callbacks.keys()
+        return list(self.callbacks.keys())
 
     def get_reply_markup(self):
         """
-        Returns the markup keyboard for the user
+        Returns the markup keyboard for the user or None.
         """
 
-        keys = self.next_state.get_callbacks()
+        keys = self.get_callbacks()
+
+        if len(keys) % 2 != 0:
+            keys.append("- - -")
 
         markup_keyboard = []
+
+        if len(keys) == 0:
+            return None
 
         for i in range(0, len(keys), 2):
             markup_keyboard.append(keys[i:i+2])

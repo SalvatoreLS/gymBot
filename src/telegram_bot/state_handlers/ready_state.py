@@ -12,6 +12,8 @@ class ReadyStateHandler(BaseStateHandler):
             "/start_workout" : self.start_workout,
             "/cancel"        : self.cancel
         }
+
+        self.next_state = super().get_next_state()
     
     def to_string(self):
         return "ready"
@@ -34,16 +36,22 @@ class ReadyStateHandler(BaseStateHandler):
         self.bot.state_machine[self.update.message.chat.id].set_substate_update_set(SubStateUpdateSet.NONE)
         self.bot.state_machine[self.update.message.chat.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
 
+        if not self.bot.set_user_workout_started(chat_id=self.update.message.chat.id):
+            await self.bot.send_message(
+                chat_id=self.update.message.chat.id,
+                text="Error starting workout. Please try again later."
+            )
+            return
+
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Workout started!"
         )
-        # TODO: Show the first exercise from the selected day
-        """
-        self.bot.send_message(
-            chat_id=self.update.message.chat.id,
-            text=...) # Get exercise from program
-        """
+        await self.bot.send_message(
+            chat_id = self.update.message.chat.id,
+            text = self.bot.get_next_exercise(chat_id = self.update.message.chat.id)
+        )
+        self.bot.increment_exercise_index(chat_id=self.update.message.chat.id)
     
     async def cancel(self):
         """

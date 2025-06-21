@@ -15,6 +15,8 @@ class EndStateHandler(BaseStateHandler):
             "/suggestions"  : self.suggestions
         }
 
+        self.next_state = super().get_next_state()
+
 
     def to_string(self):
         return "end"

@@ -1,6 +1,8 @@
 from telegram import Update
 from telegram.ext import CallbackContext
 
+from utils import get_reply_markup
+
 from state_machine import State
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
 class AuthenticatedStateHandler(BaseStateHandler):
@@ -12,6 +14,8 @@ class AuthenticatedStateHandler(BaseStateHandler):
             "/stats"   : self.stats,
             "/help"    : self.help
         }
+
+        self.next_state = super().get_next_state()
         
     
     def to_string(self):
@@ -55,7 +59,7 @@ class AuthenticatedStateHandler(BaseStateHandler):
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
             text="Statistics finished",
-            markup_keyboard=super().get_markup_keyboard()
+            markup_keyboard=get_reply_markup(self.next_state)
         )
 
 

@@ -17,6 +17,8 @@ class StartedStateHandler(BaseStateHandler):
             "/update_set"        : self.update_set
         }
 
+        self.next_state = super().get_next_state()
+
         self.update_set_callbacks = {
             SubStateUpdateExercise.TYPE_EXPRESSION: self.type_expression
         }
@@ -26,8 +28,6 @@ class StartedStateHandler(BaseStateHandler):
             SubStateUpdateSet.TYPE_WHAT       : self.type_what,
             SubStateUpdateSet.TYPE_NEW_VALUE  : self.type_new_value
         }
-
-        self.resting = False # TODO: Implement the "resting state"
 
     def to_string(self):
         return "started"
@@ -43,8 +43,35 @@ class StartedStateHandler(BaseStateHandler):
 
         message = update.message
 
-        substate_update_set = self.bot.state_machine.get_substate_update_set()
-        substate_update_exercise = self.bot.state_machine.get_substate_update_exercise()
+        substate_update_set = self.bot.state_machine[message.chat.id].get_substate_update_set()
+        substate_update_exercise = self.bot.state_machine[message.chat.id].get_substate_update_exercise()
+
+        match substate_update_set, substate_update_exercise:
+            case SubStateUpdateSet.NONE, SubStateUpdateExercise.NONE:         # No updates
+                command = message.text.split()[0]
+                await self.callbacks.get(command, super().default_handler)() 
+            case SubStateUpdateSet.TYPE_SET, SubStateUpdateExercise.NONE:        # Expecting set number
+                try:
+                    set_number = int(message.text)
+                except ValueError:
+                    await self.bot.send_message(
+                        chat_id=message.chat.id,
+                        text="Please enter a valid set number."
+                    )
+                    return
+                if set_number < 1 or set_number > self.bot.get_set_number(chat_id=message.chat.id):
+                    await self.bot.send_message(
+                        chat_id=message.chat.id,
+                        text="Set number out of range. Please enter a valid set number."
+                    )
+                    return
+                # TODO: continue with the next substate and store the set number
+            case SubStateUpdateSet.TYPE_WHAT, SubStateUpdateExercise.NONE:       # Expecting what to update
+                pass
+            case SubStateUpdateSet.TYPE_NEW_VALUE, SubStateUpdateExercise.NONE:  # Expecting new value
+                pass
+            case SubStateUpdateExercise.TYPE_EXPRESSION, SubStateUpdateSet.NONE: # Expecting exercise expression
+                pass
 
         if substate_update_set != SubStateUpdateSet.NONE:
             await self.update_set_callbacks.get(substate_update_set, super().default_handler)(message=message.text)

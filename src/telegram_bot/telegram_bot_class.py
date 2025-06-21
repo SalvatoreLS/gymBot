@@ -56,14 +56,16 @@ class TelegramBot:
 
         self.selected_program = {}
         self.selected_day_id = {}
-    
+        self.resting_users = {}  # Maps the chat_id with the resting state of the user
+        self.exercise_num_set = {}  # Maps the chat_id with a tuple (exercise_num, set_num)
+
     async def send_message(self, chat_id, text, markup=None):
         """
         Sends a message to the user
         """
         await self.app.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
 
-    def add_user(self, user_id, chat_id, username, first_name):
+    def add_user(self, user_id: int, chat_id: int, username: str, first_name: str) -> None:
         """
         Adds a user to the database
         """
@@ -72,6 +74,8 @@ class TelegramBot:
             "username": username,
             "first_name": first_name
         }
+        self.resting_users[user_id] = False        # Initialize resting state
+        self.exercise_num_set[user_id] = (-1, -1)  # Initialize exercise and set numbers
 
     def remove_user(self, user_id):
         """
@@ -158,11 +162,13 @@ class TelegramBot:
         self.selected_program[chat_id] = None
         self.selected_day_id[chat_id] = None
     
-    def set_selected_day_id(self, day_id: str, chat_id=None):
+    def set_selected_day_id(self, day_id: int, chat_id=None):
         """
         Sets the selected day ID
         """
-        day_id = int(day_id) - 1
+        if chat_id is None:
+            raise ValueError("chat_id must be not None")
+        day_id = day_id - 1
         self.selected_day_id[chat_id] = day_id
 
     def get_selected_day_id(self, chat_id=None) -> int:
@@ -211,3 +217,67 @@ class TelegramBot:
             keyboard,
             one_time_keyboard=True,
             resize_keyboard=True)
+    
+    def set_user_workout_started(self, chat_id) -> bool:
+        """
+        Sets the user workout started state.
+        """
+        if chat_id not in self.resting_users or chat_id not in self.exercise_num_set:
+            return False
+        
+        self.resting_users[chat_id] = False
+        self.exercise_num_set[chat_id] = (0, 0)
+        return True
+    
+    def get_next_exercise(self, chat_id) -> str:
+        """
+        Returns the next exercise for the user.
+        """
+        if chat_id not in self.selected_program.keys() or chat_id not in self.selected_day_id.keys():
+            return "No program or day selected."
+        
+        program = self.selected_program[chat_id]
+        day_id = self.selected_day_id[chat_id]
+        exercise_num, set_num = self.exercise_num_set[chat_id]
+
+        return """
+        Exercise {}/{}: {}
+        """.format(
+            exercise_num + 1,
+            len(program.days[day_id].exercises),
+            program.days[day_id].exercises[exercise_num].to_string()
+        )
+    
+    def increment_exercise_index(self, chat_id):
+        """
+        Increments the exercise index for the user.
+        """
+        self.exercise_num_set[chat_id] = (
+            self.exercise_num_set[chat_id][0] + 1,
+            self.exercise_num_set[chat_id][1]
+        )
+
+    def increment_set_index(self, chat_id):
+        """
+        Increments the set index for the user.
+        """
+        self.exercise_num_set[chat_id] = (
+            self.exercise_num_set[chat_id][0],
+            self.exercise_num_set[chat_id][1] + 1
+        )
+
+    def get_set_number(self, chat_id) -> int:
+        """
+        Returns the number of sets for the current exercise.
+        """
+        if chat_id not in self.selected_program.keys() or chat_id not in self.selected_day_id.keys():
+            return 0
+        
+        program = self.selected_program[chat_id]
+        day_id = self.selected_day_id[chat_id]
+        exercise_num, set_num = self.exercise_num_set[chat_id]
+
+        if exercise_num < len(program.days[day_id].exercises):
+            return program.days[day_id].exercises[exercise_num].get_num_sets()
+        
+        return 0

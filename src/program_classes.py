@@ -67,6 +67,9 @@ class Exercise:
 
     def get_last_set(self):
         return self.sets[-1]
+    
+    def get_num_sets(self) -> int:
+        return len(self.sets)
 
 class DayProgram:
     """

@@ -58,6 +58,11 @@ class Exercise:
 
     def add_set(self, new_set: ExerciseSet):
         self.sets.append(new_set)
+    
+    def get_set(self, set_num: int) -> ExerciseSet:
+        if set_num < 1 or set_num > len(self.sets):
+            raise IndexError("Set number out of range.")
+        return self.sets[set_num - 1]
 
     def to_string(self):
         string_exercise = f"\n{self.name}:\n"
@@ -132,3 +137,38 @@ class Program:
         for day in self.days:
             return_string += day.to_string()
         return return_string 
+
+class ExerciseUpdate:
+    """
+    Class for storing updates to exercises
+    """
+    def __ini__(self):
+        self.chat_id = None
+        self.exercise_num = None
+        self.set_num = None
+        self.what_to_update = None
+        self.value_to_update = None
+        self.exercise_expression = None
+    
+    def set_values(self, chat_id: int|None, exercise_num: int|None, set_num: int|None, what_to_update: str|None, value_to_update: str|None, exercise_expression: str|None):
+        if self.chat_id is None:
+            raise ValueError("Chat ID must be set first.")
+        self.chat_id = chat_id
+        if self.exercise_num is not None:
+            self.exercise_num = exercise_num
+        if self.set_num is not None:
+            self.set_num = set_num
+        if self.what_to_update is not None:
+            self.what_to_update = what_to_update
+        if self.value_to_update is not None:
+            self.value_to_update = value_to_update
+        if self.exercise_expression is not None:
+            self.exercise_expression = exercise_expression
+
+    def clear_values(self):
+        self.chat_id = None
+        self.exercise_num = None
+        self.set_num = None
+        self.what_to_update = None
+        self.value_to_update = None
+        self.exercise_expression = None

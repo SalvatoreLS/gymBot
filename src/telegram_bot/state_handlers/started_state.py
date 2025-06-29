@@ -19,11 +19,13 @@ class StartedStateHandler(BaseStateHandler):
 
         self.next_state = super().get_next_state()
 
-        self.update_set_callbacks = {
+        self.update_exercise_callbacks = {
+            SubStateUpdateExercise.NONE           : self.none_exercise,
             SubStateUpdateExercise.TYPE_EXPRESSION: self.type_expression
         }
 
-        self.update_exercise_callbacks = {
+        self.update_set_callbacks = {
+            SubStateUpdateSet.NONE            : self.none_state,
             SubStateUpdateSet.TYPE_SET        : self.type_set,
             SubStateUpdateSet.TYPE_WHAT       : self.type_what,
             SubStateUpdateSet.TYPE_NEW_VALUE  : self.type_new_value
@@ -37,150 +39,242 @@ class StartedStateHandler(BaseStateHandler):
         Handles the message based on the substates
         and the provided command.
         ."""
-
         self.update = update
         self.context = context
-
         message = update.message
+        await self.callbacks.get(message.text.split()[0], super().default_handler)(message=message)
 
-        substate_update_set = self.bot.state_machine[message.chat.id].get_substate_update_set()
-        substate_update_exercise = self.bot.state_machine[message.chat.id].get_substate_update_exercise()
-
-        match substate_update_set, substate_update_exercise:
-            case SubStateUpdateSet.NONE, SubStateUpdateExercise.NONE:         # No updates
-                command = message.text.split()[0]
-                await self.callbacks.get(command, super().default_handler)() 
-            case SubStateUpdateSet.TYPE_SET, SubStateUpdateExercise.NONE:        # Expecting set number
-                try:
-                    set_number = int(message.text)
-                except ValueError:
-                    await self.bot.send_message(
-                        chat_id=message.chat.id,
-                        text="Please enter a valid set number."
-                    )
-                    return
-                if set_number < 1 or set_number > self.bot.get_set_number(chat_id=message.chat.id):
-                    await self.bot.send_message(
-                        chat_id=message.chat.id,
-                        text="Set number out of range. Please enter a valid set number."
-                    )
-                    return
-                # TODO: continue with the next substate and store the set number
-            case SubStateUpdateSet.TYPE_WHAT, SubStateUpdateExercise.NONE:       # Expecting what to update
-                pass
-            case SubStateUpdateSet.TYPE_NEW_VALUE, SubStateUpdateExercise.NONE:  # Expecting new value
-                pass
-            case SubStateUpdateExercise.TYPE_EXPRESSION, SubStateUpdateSet.NONE: # Expecting exercise expression
-                pass
-
-        if substate_update_set != SubStateUpdateSet.NONE:
-            await self.update_set_callbacks.get(substate_update_set, super().default_handler)(message=message.text)
-            return
-
-        if substate_update_exercise != SubStateUpdateExercise.NONE:
-            await self.update_exercise_callbacks.get(substate_update_exercise, super().default_handler)(message=message.text)
-            return
-        
-        command = message.text.split()[0]
-        
-        await self.callbacks.get(command, super().default_handler)()
-
-    async def prev_exercise(self):
+    async def prev_exercise(self, message):
         """
         Handles the /prev_exercise command.
         """
-        # TODO
+        if self.bot.get_exercise_num(chat_id=self.update.message.chat.id) <= 1:
+            await self.bot.send_message(
+                chat_id=self.update.message.chat.id,
+                text="You are already at the first exercise."
+            )
+            return
+        self.bot.decrement_exercise_index(chat_id=self.update.message.chat.id)
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
-            text="Previous exercise - TODO"
+            text=self.bot.get_next_exercise(chat_id=self.update.message.chat.id)
+        )
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text=f"Set {self.bot.get_set_number(chat_id=self.update.message.chat.id)} of {self.bot.get_exercise_num(chat_id=self.update.message.chat.id)}:\n\n{self.bot.get_exercise_set(chat_id=self.update.message.chat.id)}"
         )
 
-    async def next_exercise(self):
+    async def next_exercise(self, message):
         """
         Handles the /next_exercise command.
         """
-        # TODO
+        program = self.bot.selected_program[self.update.message.chat.id]
+        day_id = self.bot.selected_day_id[self.update.message.chat.id]
+        total_exercises = len(program.days[day_id].exercises)
+
+        if self.bot.get_exercise_num(chat_id=self.update.message.chat.id) >= total_exercises:
+            await self.bot.send_message(
+                chat_id=self.update.message.chat.id,
+                text="Workout finished! Congratulations!"
+            )
+            self.bot.state_machine[self.update.message.chat.id].set_state(State.END)
+            return
+        
+        self.bot.increment_exercise_index(chat_id=self.update.message.chat.id)
+        self.bot.reset_set_index(chat_id=self.update.message.chat.id)
+        
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
-            text="Next exercise - TODO"
+            text=self.bot.get_next_exercise(chat_id=self.update.message.chat.id)
+        )
+        await self.bot.send_message(
+            chat_id=self.update.message.chat.id,
+            text=f"Set {self.bot.get_set_number(chat_id=self.update.message.chat.id)} of {self.bot.get_exercise_num(chat_id=self.update.message.chat.id)}:\n\n{self.bot.get_exercise_set(chat_id=self.update.message.chat.id)}"
         )
 
-    async def prev_set(self):
+    async def prev_set(self, message):
         """
         Handles the /prev_set command.
         """
-        # TODO
+        if self.bot.get_set_number(chat_id=self.update.message.chat.id) <= 1:
+            await self.bot.send_message(
+                chat_id=self.update.message.chat.id,
+                text="You are already at the first set."
+            )
+            return
+        self.bot.decrement_set_index(chat_id=self.update.message.chat.id)
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
-            text="Previous set - TODO"
+            text=self.bot.ge
         )
 
-    async def next_set(self):
-        # TODO: Implement the markup when the last exercise is finished
+    async def next_set(self, message):
         """
         Handls the /next_set command.
         """
+        if self.bot.get_set_number(chat_id=message.chat.id) >= self.bot.get_set_number(chat_id=message.chat.id):
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Exercise finished!"
+            )
+            self.bot.increment_exercise_index(chat_id=message.chat.id)
+            self.bot.reset_set_index(chat_id=message.chat.id)
+            if self.bot.get_exercise_num(chat_id=message.chat.id) >= self.bot.get_exercise_num(chat_id=message.chat.id):
+                await self.bot.send_message(
+                    chat_id=message.chat.id,
+                    text="Workout finished! Congratulations!"
+                )
+                self.bot.state_machine[message.chat.id].set_state(State.END)
+                return
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text=self.bot.get_next_exercise(chat_id=message.chat.id)
+            )
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text=f"Set {self.bot.get_set_number(chat_id=message.chat.id)} of {self.bot.get_exercise_num(chat_id=message.chat.id)}:\n\n{self.bot.get_exercise_set(chat_id=message.chat.id)}"
+            )
+            return
+        self.bot.increment_set_index(chat_id=message.chat.id)
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
-            text="Next set - TODO"
+            chat_id=message.chat.id,
+            text=f"Set {self.bot.get_set_number(chat_id=message.chat.id)} of {self.bot.get_exercise_num(chat_id=message.chat.id)}:\n\n{self.bot.get_exercise_set(chat_id=message.chat.id)}"
         )
     
-    async def update_set(self):
+    async def update_set(self, message):
         """
         Handles the /update_set command.
         """
-        # TODO
-        await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
-            text="Update set - TODO"
-        )
+        substate_update_set = self.bot.state_machine[message.chat.id].get_substate_update_set()
+        await self.update_set_callbacks.get(substate_update_set, super().default_handler)(message=message)
 
-    async def update_exercise(self):
+    async def update_exercise(self, message):
         """
         Handles the /update_exercise command.
         """
-        # TODO
+        substate_update_exercise = self.bot.state_machine[message.chat.id].get_substate_update_exercise()
+        await self.update_exercise_callbacks.get(substate_update_exercise, super().default_handler)(message=message)
+
+    async def none_exercise(self, message):
+        """
+        Handles the none exercise substate.
+        """
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
-            text="Update exercise - TODO"
+            text="Type the expression of the exercise you want to update."
         )
+        self.bot.state_machine[self.update.message.chat.id].set_substate_update_exercise(SubStateUpdateExercise.TYPE_EXPRESSION)
 
-    async def type_expression(self): 
+    async def type_expression(self, message): 
         """
         Handles the type_expression exercise substate.
         """
         # TODO
+        if self.bot.update_by_expression(chat_id=message.chat.id, expression=message.text.strip()):
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Exercise updated successfully."
+            )
+        else:
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Error updating exercise. Please try again later."
+            )
+        self.bot.state_machine[message.chat.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
+    
+    async def none_state(self, message):
+        """
+        Handles the none state for update set.
+        """
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
-            text="Type expression - TODO"
+            text="Type the number of the set you want to update."
         )
+        self.bot.state_machine[self.update.message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_SET)
 
-    async def type_set(self):
+    async def type_set(self, message):
         """
         Handles the type_set set substate.
         """
         # TODO
+        try:
+            set_number = int(message.text)
+        except ValueError:
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Please enter a valid set number."
+            )
+            return
+        if set_number < 1 or set_number > self.bot.get_set_number(chat_id=message.chat.id):
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Set number out of range. Please enter a valid set number."
+            )
+            return
+        self.bot.updating[message.chat.id].add_to_updating(chat_id=message.chat.id, exercise_num=self.bot.get_exercise_num(chat_id=message.chat.id), set_num=set_number)
+        self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_WHAT)
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
-            text="Type set - TODO"
+            chat_id=message.chat.id,
+            text=f"Set {set_number} selected. What would you like to update?"
+        )
+        await self.bot.send_message(
+            chat_id=message.chat.id,
+            text="1 - Weight\n2 - Rest\n3 - Reps\n0 - Cancel",
+            reply_markup=self.bot.create_reply_markup(keyboard=[["0", "1", "2", "3"]])
         )
 
-    async def type_what(self):
+    async def type_what(self, message):
         """
         Handles the type_what set substate.
         """
-        # TODO
+        try:
+            what_to_update = int(message.text)
+        except ValueError:
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Please enter a valid number for what to update."
+            )
+            return
+        if what_to_update < 0 or what_to_update > 3: # supporting only weight, rest, reps (will support more in the future)
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Invalid option. Please enter a valid number (0-3)."
+            )
+            return
+        self.bot.updating[message.chat.id].add_to_updating(chat_id=message.chat.id, what_to_update=what_to_update)
+        self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_NEW_VALUE)
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
-            text="Type what - TODO"
+            chat_id=message.chat.id,
+            text="Please enter the new value."
         )
 
-    async def type_new_value(self):
+    async def type_new_value(self, message):
         """
         Handles the type_new_value set substate.
         """
-        # TODO
-        await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
-            text="Type new value - TODO"
-        )
+        try:
+            new_value = int(message.text)
+        except ValueError:
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Please enter a valid number for the new value."
+            )
+            return
+        if new_value < 0:  # Assuming negative values are not allowed
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Negative values are not allowed. Please enter a valid number."
+            )
+            return
+        self.bot.updating[message.chat.id].add_to_updating(chat_id=message.chat.id, value_to_update=new_value)
+        self.bot.state_machine[message.chat.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
+        if self.bot.update_exercise(chat_id=message.chat.id):
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Exercise updated successfully."
+            )
+        else:
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Error updating exercise. Please try again later."
+            )

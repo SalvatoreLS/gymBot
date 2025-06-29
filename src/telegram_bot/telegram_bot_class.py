@@ -4,6 +4,7 @@ from telegram.ext import Application, MessageHandler, filters, CallbackContext
 from database import Database
 from state_machine import StateMachine
 from state_machine import State
+from program_classes import ExerciseUpdate
 
 from telegram_bot.state_handlers.state_graph import StateGraph
 
@@ -38,6 +39,7 @@ class TelegramBot:
         
         self.user_db = {}   # Stores user data in memory
         self.id_users = {}  # Maps the id of the user in DB with the chat_id (chat_id : user_id)
+        self.updating = {}  # Maps the chat_id with ExericseUpdate objects
 
         self.app.add_handler(MessageHandler(filters.ALL, self.handle_message))
 
@@ -75,7 +77,7 @@ class TelegramBot:
             "first_name": first_name
         }
         self.resting_users[user_id] = False        # Initialize resting state
-        self.exercise_num_set[user_id] = (-1, -1)  # Initialize exercise and set numbers
+        self.exercise_num_set[user_id] = (0, 0)  # Initialize exercise and set numbers
 
     def remove_user(self, user_id):
         """
@@ -128,21 +130,6 @@ class TelegramBot:
         if handler:
             await handler.handle_message(update, context)
 
-    async def button_click(self, update: Update, context: CallbackContext) -> None:
-        """
-        Handles button clicks from inline keyboards
-        """
-        query = update.callback_query
-        await query.answer()
-
-        responses = {
-            "1": "You selected Option 1!",
-            "2": "You selected Option 2!",
-            "3": "You selected Option 3!"
-        }
-
-        await query.edit_message_text(text=responses.get(query.data, "Invalid choice."))
-
     def set_selected_program(self, program, chat_id=None):
         """
         Sets the selected program ID
@@ -191,7 +178,6 @@ class TelegramBot:
             return True
         return False
             
-    
     def check_day(self, chat_id, day_id: str) -> bool:
         """
         Checks if the day specified is in the selected program.
@@ -226,7 +212,7 @@ class TelegramBot:
             return False
         
         self.resting_users[chat_id] = False
-        self.exercise_num_set[chat_id] = (0, 0)
+        self.exercise_num_set[chat_id] = (1, 1)
         return True
     
     def get_next_exercise(self, chat_id) -> str:
@@ -243,10 +229,28 @@ class TelegramBot:
         return """
         Exercise {}/{}: {}
         """.format(
-            exercise_num + 1,
+            exercise_num,   
             len(program.days[day_id].exercises),
-            program.days[day_id].exercises[exercise_num].to_string()
+            program.days[day_id].exercises[exercise_num-1].to_string()
         )
+
+    def get_exercise_set(self, chat_id) -> str:
+        """
+        Returns the current exercise and set for the user.
+        """
+        if chat_id not in self.selected_program.keys() or chat_id not in self.selected_day_id.keys():
+            return "No program or day selected."
+        
+        program = self.selected_program[chat_id]
+        day_id = self.selected_day_id[chat_id]
+        exercise_num, set_num = self.exercise_num_set[chat_id]
+
+        if exercise_num <= len(program.days[day_id].exercises):
+            exercise = program.days[day_id].exercises[exercise_num]
+            if set_num < exercise.get_num_sets():
+                return exercise.get_set(set_num).to_string()
+        
+        return "No sets available for this exercise."
     
     def increment_exercise_index(self, chat_id):
         """
@@ -257,6 +261,16 @@ class TelegramBot:
             self.exercise_num_set[chat_id][1]
         )
 
+    def decrement_exercise_index(self, chat_id):
+        """
+        Decrements the exercise index for the user.
+        """
+        if self.exercise_num_set[chat_id][0] > 0:
+            self.exercise_num_set[chat_id] = (
+                self.exercise_num_set[chat_id][0] - 1,
+                self.exercise_num_set[chat_id][1]
+            )
+
     def increment_set_index(self, chat_id):
         """
         Increments the set index for the user.
@@ -265,6 +279,16 @@ class TelegramBot:
             self.exercise_num_set[chat_id][0],
             self.exercise_num_set[chat_id][1] + 1
         )
+    
+    def decrement_set_index(self, chat_id):
+        """
+        Decrements the set index for the user.
+        """
+        if self.exercise_num_set[chat_id][1] > 0:
+            self.exercise_num_set[chat_id] = (
+                self.exercise_num_set[chat_id][0],
+                self.exercise_num_set[chat_id][1] - 1
+            )
 
     def get_set_number(self, chat_id) -> int:
         """
@@ -277,7 +301,97 @@ class TelegramBot:
         day_id = self.selected_day_id[chat_id]
         exercise_num, set_num = self.exercise_num_set[chat_id]
 
-        if exercise_num < len(program.days[day_id].exercises):
-            return program.days[day_id].exercises[exercise_num].get_num_sets()
+        if exercise_num <= len(program.days[day_id].exercises):
+            return program.days[day_id].exercises[exercise_num-1].get_num_sets()
         
         return 0
+    
+    def add_to_updating(self, chat_id, exercise_num = None, set_num = None, what_to_update = None, value_to_update = None, exercise_expression = None):
+        """
+        Adds the user to the updating dictionary.
+        ExerciseUpdate will update only those values that are not None.
+        """
+        if chat_id not in self.updating:
+            self.updating[chat_id] = ExerciseUpdate()
+
+        self.updating[chat_id].set_values(chat_id, exercise_num, set_num, what_to_update, value_to_update, exercise_expression)
+
+    def get_exercise_num(self, chat_id) -> int:
+        """
+        Returns the current exercise number for the user.
+        """
+        if chat_id not in self.exercise_num_set:
+            return -1
+        return self.exercise_num_set[chat_id][0]
+
+    def update_exercise(self, chat_id) -> bool:
+        """
+        Updates the exercise for the user.
+        """
+        if chat_id not in self.updating:
+            return False
+        
+        update = self.updating[chat_id]
+        if update.chat_id is None:
+            return False
+        
+        if update.expression is not None:
+            return self.update_by_expression(chat_id, update.expression)
+
+        if not self.is_set_updating_none(update):
+            # Update the exercise in the database
+            return self.update_set(chat_id, update)
+
+    def is_set_updating_none(self, update: ExerciseUpdate) -> bool:
+        """
+        Checks if the set updating has some values set to None, besides exercise_expression.
+        """
+        return update.set_num is None or update.exercise_num is None or update.what_to_update is None or update.value_to_update is None
+
+    def update_by_expression(self, chat_id, expression: str) -> bool:
+        """
+        Updates the exercise by parsing an expression with some logic.
+        """
+        # TODO: Implement the logic to update the exercise by the expression
+        return False
+    
+    def update_set(self, chat_id, update: ExerciseUpdate) -> bool:
+        """
+        Updates the set for the user.
+        """
+        user_id = self.id_users[chat_id]
+        program_id = self.selected_program[chat_id].id
+        day_id = self.selected_day_id[chat_id]
+        exercise_id = self.exercise_num_set[chat_id][0]
+        set_num = update.set_num
+        what_to_update = self.get_string_what_to_update(update.what_to_update)
+
+        self.database.update_set(
+            user_id=user_id,
+            program_id=program_id,
+            day_id=day_id,
+            exercise_id=exercise_id,
+            set_num=set_num,
+            what_to_update=what_to_update,
+            value_to_update=update.value_to_update
+        )
+    
+    def reset_set_index(self, chat_id):
+        """
+        Resets the set index for the user.
+        """
+        self.exercise_num_set[chat_id] = (self.exercise_num_set[chat_id][0], 1)
+
+    def get_string_what_to_update(self, what_to_update: int) -> str:
+        """
+        Returns the string representation of what to update.
+        """
+        match what_to_update:
+            case 1:
+                return "reps"
+            case 2:
+                return "rest"
+            case 3:
+                return "weight"
+            case _:
+                return None

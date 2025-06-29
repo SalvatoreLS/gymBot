@@ -43,15 +43,18 @@ class ReadyStateHandler(BaseStateHandler):
             )
             return
 
+        keyboard = [["/prev_exercise", "/next_exercise"],
+                    ["/prev_set", "/next_set"],
+                    ["/update_exercise", "/update_set"]]
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
+            markup=self.bot.create_reply_markup(keyboard=keyboard),
             text="Workout started!"
         )
         await self.bot.send_message(
             chat_id = self.update.message.chat.id,
             text = self.bot.get_next_exercise(chat_id = self.update.message.chat.id)
         )
-        self.bot.increment_exercise_index(chat_id=self.update.message.chat.id)
     
     async def cancel(self):
         """
@@ -64,4 +67,3 @@ class ReadyStateHandler(BaseStateHandler):
             chat_id=self.update.message.chat.id,
             text="Workout cancelled."
         )
-    

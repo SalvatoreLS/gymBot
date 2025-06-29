@@ -160,7 +160,6 @@ class Database:
             print(f"Database error: {e}")
             return None
     
-    
     def program_details_to_string(self, program_details) -> str:
         returned_string = ""
         day_number = 0
@@ -171,7 +170,6 @@ class Database:
             returned_string += f"\t- {row[2]}\n"
         return returned_string[:-1]
     
-
     def check_program(self, user_id, program_id):
         try:
             self.cursor.execute("""
@@ -276,7 +274,6 @@ class Database:
             print(f"Database error: {e}")
             return None
 
-
     def __parse_exercises(self, exercises: List[Tuple]) -> List[Exercise]:
         """
         Takes the result of exercises query execution and fills an exercise structure.
@@ -309,10 +306,32 @@ class Database:
 
         return exercises_list
 
-
     def __fill_exercise(self, row, exercise):
         exercise.set_id(row[0])
         exercise.set_name(row[1])
         exercise.set_comment(row[2])
         exercise.set_extra_info(row[3])
         return exercise
+    
+    def update_set(self, user_id: int, program_id: int, day_id: int, exercise_id: int, set_numer: int, what_to_update: str, new_value: int) -> bool:
+        """
+        Function to update a set in the database
+        """
+        try:
+            self.cursor.execute("""
+                                UPDATE workout_set ws
+                                SET weight = %s, reps = %s, rest = %s
+                                FROM workout w, program_day_exercise pde
+                                WHERE ws.workout_id = w.id AND pde.exercise_id = ws.exercise_id
+                                    AND w.user_id = %s AND w.program_day_id = %s
+                                    AND pde.program_day_id = %s AND pde.exercise_id = %s
+                                    AND ws.sequence_number = %s;
+                                """, (new_value if what_to_update == "weight" else None,
+                                      new_value if what_to_update == "reps" else None,
+                                      new_value if what_to_update == "rest" else None,
+                                      user_id, program_id, day_id, exercise_id, set_numer))
+            self.conn.commit()
+            return True
+        except Exception as e:
+            print(f"Database error while updating set: {e}")
+            return False

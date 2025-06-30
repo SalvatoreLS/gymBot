@@ -14,12 +14,12 @@ class BaseStateHandler:
     def to_string(self):
         return "base"
 
-    async def default_handler(self):
+    async def default_handler(self, message):
         """
         Default handler for all states
         """
         await self.bot.send_message(
-            chat_id=self.update.effective_chat.id,
+            chat_id=message.chat.id,
             text="Invalid command. Please try again."
         )
 

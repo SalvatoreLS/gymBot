@@ -246,8 +246,8 @@ class TelegramBot:
         exercise_num, set_num = self.exercise_num_set[chat_id]
 
         if exercise_num <= len(program.days[day_id].exercises):
-            exercise = program.days[day_id].exercises[exercise_num]
-            if set_num < exercise.get_num_sets():
+            exercise = program.days[day_id].exercises[exercise_num-1]
+            if set_num <= exercise.get_num_sets():
                 return exercise.get_set(set_num).to_string()
         
         return "No sets available for this exercise."
@@ -323,6 +323,21 @@ class TelegramBot:
         if chat_id not in self.exercise_num_set:
             return -1
         return self.exercise_num_set[chat_id][0]
+    
+    def get_all_sets_num(self, chat_id, exercise_num: int) -> int:
+        """
+        Returns the number of sets for the given exercise number.
+        """
+        if chat_id not in self.selected_program.keys() or chat_id not in self.selected_day_id.keys():
+            return 0
+        
+        program = self.selected_program[chat_id]
+        day_id = self.selected_day_id[chat_id]
+
+        if exercise_num <= len(program.days[day_id].exercises):
+            return program.days[day_id].exercises[exercise_num-1].get_num_sets()
+        
+        return 0
 
     def update_exercise(self, chat_id) -> bool:
         """
@@ -335,12 +350,13 @@ class TelegramBot:
         if update.chat_id is None:
             return False
         
-        if update.expression is not None:
+        if update.exercise_expression is not None:
             return self.update_by_expression(chat_id, update.expression)
 
         if not self.is_set_updating_none(update):
             # Update the exercise in the database
             return self.update_set(chat_id, update)
+        return False
 
     def is_set_updating_none(self, update: ExerciseUpdate) -> bool:
         """

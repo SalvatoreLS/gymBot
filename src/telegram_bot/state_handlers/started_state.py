@@ -1,9 +1,11 @@
 from telegram_bot.state_handlers.base_handler import BaseStateHandler
 
 from state_machine import State, SubStateUpdateExercise, SubStateUpdateSet
+from program_classes import ExerciseUpdate
 
 from telegram import Update
 from telegram.ext import CallbackContext
+
 class StartedStateHandler(BaseStateHandler):
     def __init__(self, bot):
         super().__init__(bot)
@@ -42,13 +44,23 @@ class StartedStateHandler(BaseStateHandler):
         self.update = update
         self.context = context
         message = update.message
-        await self.callbacks.get(message.text.split()[0], super().default_handler)(message=message)
+        
+        substate_update_set = self.bot.state_machine[message.chat.id].get_substate_update_set()
+        substate_update_exercise = self.bot.state_machine[message.chat.id].get_substate_update_exercise()
+
+        if substate_update_set == SubStateUpdateSet.NONE and substate_update_exercise == SubStateUpdateExercise.NONE:
+            await self.callbacks.get(message.text.split()[0], super().default_handler)(message=message)
+        elif substate_update_set != SubStateUpdateSet.NONE:
+            await self.update_set(message)
+        elif substate_update_exercise != SubStateUpdateExercise.NONE:
+            await self.update_exercise(message)
 
     async def prev_exercise(self, message):
         """
         Handles the /prev_exercise command.
         """
-        if self.bot.get_exercise_num(chat_id=self.update.message.chat.id) <= 1:
+        exercise_num = self.bot.get_exercise_num(chat_id=message.chat.id)
+        if exercise_num <= 1:
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
                 text="You are already at the first exercise."
@@ -60,8 +72,8 @@ class StartedStateHandler(BaseStateHandler):
             text=self.bot.get_next_exercise(chat_id=self.update.message.chat.id)
         )
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
-            text=f"Set {self.bot.get_set_number(chat_id=self.update.message.chat.id)} of {self.bot.get_exercise_num(chat_id=self.update.message.chat.id)}:\n\n{self.bot.get_exercise_set(chat_id=self.update.message.chat.id)}"
+            chat_id=message.chat.id,
+            text=f"Set {self.bot.get_set_number(chat_id=message.chat.id)} of {self.bot.get_all_sets_num(chat_id=message.chat.id, exercise_num=exercise_num)}:\n\n{self.bot.get_exercise_set(chat_id=message.chat.id)}"
         )
 
     async def next_exercise(self, message):
@@ -71,11 +83,14 @@ class StartedStateHandler(BaseStateHandler):
         program = self.bot.selected_program[self.update.message.chat.id]
         day_id = self.bot.selected_day_id[self.update.message.chat.id]
         total_exercises = len(program.days[day_id].exercises)
+        exercise_num = self.bot.get_exercise_num(chat_id=message.chat.id)
 
-        if self.bot.get_exercise_num(chat_id=self.update.message.chat.id) >= total_exercises:
+        if exercise_num >= total_exercises:
+            keyboard = [["/stats", "/suggestions"], ["-", "/quit"]]
             await self.bot.send_message(
                 chat_id=self.update.message.chat.id,
-                text="Workout finished! Congratulations!"
+                text="Workout finished! Congratulations!",
+                markup=self.bot.create_reply_markup(keyboard=keyboard)
             )
             self.bot.state_machine[self.update.message.chat.id].set_state(State.END)
             return
@@ -89,7 +104,7 @@ class StartedStateHandler(BaseStateHandler):
         )
         await self.bot.send_message(
             chat_id=self.update.message.chat.id,
-            text=f"Set {self.bot.get_set_number(chat_id=self.update.message.chat.id)} of {self.bot.get_exercise_num(chat_id=self.update.message.chat.id)}:\n\n{self.bot.get_exercise_set(chat_id=self.update.message.chat.id)}"
+            text=f"Set {self.bot.get_set_number(chat_id=self.update.message.chat.id)} of {self.bot.get_all_sets_num(chat_id=message.chat.id, exercise_num=exercise_num)}:\n\n{self.bot.get_exercise_set(chat_id=self.update.message.chat.id)}"
         )
 
     async def prev_set(self, message):
@@ -187,10 +202,12 @@ class StartedStateHandler(BaseStateHandler):
         Handles the none state for update set.
         """
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="Type the number of the set you want to update."
         )
-        self.bot.state_machine[self.update.message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_SET)
+        self.bot.updating[message.chat.id] = ExerciseUpdate()
+        self.bot.updating[message.chat.id].set_values(chat_id=message.chat.id, exercise_num=self.bot.get_exercise_num(chat_id=message.chat.id))
+        self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_SET)
 
     async def type_set(self, message):
         """
@@ -211,7 +228,8 @@ class StartedStateHandler(BaseStateHandler):
                 text="Set number out of range. Please enter a valid set number."
             )
             return
-        self.bot.updating[message.chat.id].add_to_updating(chat_id=message.chat.id, exercise_num=self.bot.get_exercise_num(chat_id=message.chat.id), set_num=set_number)
+        
+        self.bot.add_to_updating(chat_id=message.chat.id, exercise_num=self.bot.get_exercise_num(chat_id=message.chat.id), set_num=set_number)
         self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_WHAT)
         await self.bot.send_message(
             chat_id=message.chat.id,
@@ -220,7 +238,7 @@ class StartedStateHandler(BaseStateHandler):
         await self.bot.send_message(
             chat_id=message.chat.id,
             text="1 - Weight\n2 - Rest\n3 - Reps\n0 - Cancel",
-            reply_markup=self.bot.create_reply_markup(keyboard=[["0", "1", "2", "3"]])
+            markup=self.bot.create_reply_markup(keyboard=[["0", "1"], ["2", "3"]])
         )
 
     async def type_what(self, message):
@@ -241,7 +259,7 @@ class StartedStateHandler(BaseStateHandler):
                 text="Invalid option. Please enter a valid number (0-3)."
             )
             return
-        self.bot.updating[message.chat.id].add_to_updating(chat_id=message.chat.id, what_to_update=what_to_update)
+        self.bot.add_to_updating(chat_id=message.chat.id, what_to_update=what_to_update)
         self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_NEW_VALUE)
         await self.bot.send_message(
             chat_id=message.chat.id,
@@ -266,7 +284,7 @@ class StartedStateHandler(BaseStateHandler):
                 text="Negative values are not allowed. Please enter a valid number."
             )
             return
-        self.bot.updating[message.chat.id].add_to_updating(chat_id=message.chat.id, value_to_update=new_value)
+        self.bot.add_to_updating(chat_id=message.chat.id, value_to_update=new_value)
         self.bot.state_machine[message.chat.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
         if self.bot.update_exercise(chat_id=message.chat.id):
             await self.bot.send_message(

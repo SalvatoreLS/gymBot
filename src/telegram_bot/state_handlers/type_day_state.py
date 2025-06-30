@@ -12,7 +12,6 @@ class TypeDayStateHandler(BaseStateHandler):
         super().__init__(bot)
         self.next_state = super().get_next_state()
 
-
     def to_string(self):
         return "type_day"
 

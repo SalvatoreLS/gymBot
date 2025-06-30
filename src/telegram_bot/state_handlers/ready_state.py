@@ -26,19 +26,19 @@ class ReadyStateHandler(BaseStateHandler):
         message = update.message
 
         command = message.text.split()[0]
-        await self.callbacks.get(command, super().default_handler)()
+        await self.callbacks.get(command, super().default_handler)(message=message)
 
-    async def start_workout(self):
+    async def start_workout(self, message):
         """
         Handles the /start_workout command.
         """
-        self.bot.state_machine[self.update.message.chat.id].set_state(State.STARTED)
-        self.bot.state_machine[self.update.message.chat.id].set_substate_update_set(SubStateUpdateSet.NONE)
-        self.bot.state_machine[self.update.message.chat.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
+        self.bot.state_machine[message.chat.id].set_state(State.STARTED)
+        self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.NONE)
+        self.bot.state_machine[message.chat.id].set_substate_update_exercise(SubStateUpdateExercise.NONE)
 
-        if not self.bot.set_user_workout_started(chat_id=self.update.message.chat.id):
+        if not self.bot.set_user_workout_started(chat_id=message.chat.id):
             await self.bot.send_message(
-                chat_id=self.update.message.chat.id,
+                chat_id=message.chat.id,
                 text="Error starting workout. Please try again later."
             )
             return
@@ -47,16 +47,16 @@ class ReadyStateHandler(BaseStateHandler):
                     ["/prev_set", "/next_set"],
                     ["/update_exercise", "/update_set"]]
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             markup=self.bot.create_reply_markup(keyboard=keyboard),
             text="Workout started!"
         )
         await self.bot.send_message(
-            chat_id = self.update.message.chat.id,
-            text = self.bot.get_next_exercise(chat_id = self.update.message.chat.id)
+            chat_id = message.chat.id,
+            text = self.bot.get_next_exercise(chat_id = message.chat.id)
         )
     
-    async def cancel(self):
+    async def cancel(self, message):
         """
         Handles the /cancel command.
         """
@@ -64,6 +64,6 @@ class ReadyStateHandler(BaseStateHandler):
         # TODO: Add the possibility to hold the previously selected
         # program in memory and automatically ask the user to start that
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="Workout cancelled."
         )

@@ -29,34 +29,34 @@ class EndStateHandler(BaseStateHandler):
 
         command = message.text.split()[0]
 
-        await self.callbacks.get(command, super().default_handler)()
+        await self.callbacks.get(command, super().default_handler)(message=message)
     
-    async def quit(self):
+    async def quit(self, message):
         """
         Handles the /quit command.
         """
-        self.bot.state_machine[self.update.message.chat.id].set_state(State.AUTHENTICATED)
+        self.bot.state_machine[message.chat.id].set_state(State.AUTHENTICATED)
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="Exited workout"
         )
 
-    async def stats(self):
+    async def stats(self, message):
         """
         Handles the /stats command.
         """
         # TODO
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="Not yet implemented - TODO"
         )
 
-    async def suggestions(self):
+    async def suggestions(self, message):
         """
         Handles the /suggestins command.
         """
         # TODO
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="Not yet implemented - TODO"
         )

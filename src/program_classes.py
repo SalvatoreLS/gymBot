@@ -142,7 +142,7 @@ class ExerciseUpdate:
     """
     Class for storing updates to exercises
     """
-    def __ini__(self):
+    def __init__(self):
         self.chat_id = None
         self.exercise_num = None
         self.set_num = None
@@ -150,9 +150,13 @@ class ExerciseUpdate:
         self.value_to_update = None
         self.exercise_expression = None
     
-    def set_values(self, chat_id: int|None, exercise_num: int|None, set_num: int|None, what_to_update: str|None, value_to_update: str|None, exercise_expression: str|None):
-        if self.chat_id is None:
-            raise ValueError("Chat ID must be set first.")
+    def set_values(self,
+                   chat_id: int|None,
+                   exercise_num: int|None = None,
+                   set_num: int|None = None,
+                   what_to_update: str|None = None,
+                   value_to_update: str|None = None,
+                   exercise_expression: str|None = None):
         self.chat_id = chat_id
         if self.exercise_num is not None:
             self.exercise_num = exercise_num

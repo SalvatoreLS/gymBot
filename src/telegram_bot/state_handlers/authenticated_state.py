@@ -31,9 +31,9 @@ class AuthenticatedStateHandler(BaseStateHandler):
         message = update.message
         command = message.text.split()[0]
 
-        await self.callbacks.get(command, super().default_handler)()
+        await self.callbacks.get(command, super().default_handler)(message=message)
     
-    async def program(self):
+    async def program(self, message):
         """
         Handles the /program command.
         User asks for a program and later types the program name
@@ -42,13 +42,13 @@ class AuthenticatedStateHandler(BaseStateHandler):
         await self.display_programs()
 
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="Please type the program you want to start"
         )
 
-        self.bot.state_machine[self.update.message.chat.id].set_state(State.TYPE_PROGRAM)
+        self.bot.state_machine[message.chat.id].set_state(State.TYPE_PROGRAM)
 
-    async def stats(self):
+    async def stats(self, message):
         """
         Handles the /stats command.
         User asks for the stats of a program
@@ -57,11 +57,10 @@ class AuthenticatedStateHandler(BaseStateHandler):
         #        and visualizing the data
         
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="Statistics finished",
             markup_keyboard=get_reply_markup(self.next_state)
         )
-
 
     async def display_programs(self):
         """
@@ -77,26 +76,26 @@ class AuthenticatedStateHandler(BaseStateHandler):
             text="Here are the available programs:\n" + programs_str
         )
     
-    async def list(self):
+    async def list(self, message):
         """
         Handles the /list command.
         User asks for the list of programs
         """
         programs_str = self.bot.get_programs_details(
-            chat_id=self.update.message.chat.id
+            chat_id=message.chat.id
         )
 
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="Here are the details about programs:\n" + programs_str
         )
 
-    async def help(self):
+    async def help(self, message):
         """
         Handles the /help command.
         User asks for help
         """
         await self.bot.send_message(
-            chat_id=self.update.message.chat.id,
+            chat_id=message.chat.id,
             text="TODO"
         )

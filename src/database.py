@@ -7,6 +7,7 @@ from typing import List, Tuple
 from program_classes import ExerciseSet, Exercise, DayProgram, Program
 
 from pandas.errors import DatabaseError
+
 class Database:
     """
     Class for interacting with the database
@@ -121,7 +122,7 @@ class Database:
             print(f"Database error: {e}")
             return False
     
-    def get_programs(self, user_id):
+    def get_programs(self, user_id) -> str|None:
         try:
             self.cursor.execute("SELECT id, name FROM program WHERE owner_id = %s", (user_id,))
             return self.programs_to_string(self.cursor.fetchall())
@@ -313,23 +314,45 @@ class Database:
         exercise.set_extra_info(row[3])
         return exercise
     
-    def update_set(self, user_id: int, program_id: int, day_id: int, exercise_id: int, set_numer: int, what_to_update: str, new_value: int) -> bool:
+    def update_set(self,
+                   user_id: int,
+                   program_id: int,
+                   day_id: int,
+                   exercise_id: int,
+                   set_number: int,
+                   what_to_update: str,
+                   new_value: int) -> bool:
         """
         Function to update a set in the database
         """
         try:
-            self.cursor.execute("""
+            if what_to_update == "weight":
+                set_clause = "SET weight = %s"
+                params = [new_value]
+            elif what_to_update == "reps":
+                set_clause = "SET reps = %s"
+                params = [new_value]
+            elif what_to_update == "rest":
+                set_clause = "SET rest = %s"
+                params = [new_value]
+            else:
+                print(f"Invalid what_to_update value: {what_to_update}")
+                return False
+            
+            params.extend([user_id, day_id+1, exercise_id, set_number])
+            
+            self.cursor.execute(f"""
                                 UPDATE workout_set ws
-                                SET weight = %s, reps = %s, rest = %s
-                                FROM workout w, program_day_exercise pde
-                                WHERE ws.workout_id = w.id AND pde.exercise_id = ws.exercise_id
-                                    AND w.user_id = %s AND w.program_day_id = %s
-                                    AND pde.program_day_id = %s AND pde.exercise_id = %s
+                                {set_clause}
+                                FROM workout w,
+                                    program_day_exercise pde
+                                WHERE ws.workout_id = w.id
+                                    AND w.user_id = %s
+                                    AND pde.program_day_id = %s
+                                    AND pde.exercise_id = %s
+                                    AND ws.exercise_id = pde.exercise_id
                                     AND ws.sequence_number = %s;
-                                """, (new_value if what_to_update == "weight" else None,
-                                      new_value if what_to_update == "reps" else None,
-                                      new_value if what_to_update == "rest" else None,
-                                      user_id, program_id, day_id, exercise_id, set_numer))
+                                """, params)
             self.conn.commit()
             return True
         except Exception as e:

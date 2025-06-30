@@ -158,16 +158,17 @@ class ExerciseUpdate:
                    value_to_update: str|None = None,
                    exercise_expression: str|None = None):
         self.chat_id = chat_id
-        if self.exercise_num is not None:
+        if exercise_num is not None:
             self.exercise_num = exercise_num
-        if self.set_num is not None:
+        if set_num is not None:
             self.set_num = set_num
-        if self.what_to_update is not None:
+        if what_to_update is not None:
             self.what_to_update = what_to_update
-        if self.value_to_update is not None:
+        if value_to_update is not None:
             self.value_to_update = value_to_update
-        if self.exercise_expression is not None:
+        if exercise_expression is not None:
             self.exercise_expression = exercise_expression
+        return self
 
     def clear_values(self):
         self.chat_id = None

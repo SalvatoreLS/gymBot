@@ -206,14 +206,14 @@ class StartedStateHandler(BaseStateHandler):
             text="Type the number of the set you want to update."
         )
         self.bot.updating[message.chat.id] = ExerciseUpdate()
-        self.bot.updating[message.chat.id].set_values(chat_id=message.chat.id, exercise_num=self.bot.get_exercise_num(chat_id=message.chat.id))
+        exercise_num = self.bot.get_exercise_num(chat_id=message.chat.id)
+        self.bot.add_to_updating(chat_id=message.chat.id, exercise_num=exercise_num)
         self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_SET)
 
     async def type_set(self, message):
         """
         Handles the type_set set substate.
         """
-        # TODO
         try:
             set_number = int(message.text)
         except ValueError:
@@ -229,7 +229,8 @@ class StartedStateHandler(BaseStateHandler):
             )
             return
         
-        self.bot.add_to_updating(chat_id=message.chat.id, exercise_num=self.bot.get_exercise_num(chat_id=message.chat.id), set_num=set_number)
+        exercise_num = self.bot.get_exercise_num(chat_id=message.chat.id)
+        self.bot.add_to_updating(chat_id=message.chat.id, exercise_num=exercise_num, set_num=set_number)
         self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_WHAT)
         await self.bot.send_message(
             chat_id=message.chat.id,
@@ -237,7 +238,7 @@ class StartedStateHandler(BaseStateHandler):
         )
         await self.bot.send_message(
             chat_id=message.chat.id,
-            text="1 - Weight\n2 - Rest\n3 - Reps\n0 - Cancel",
+            text="1 - Reps\n2 - Rest\n3 - Weight\n0 - Cancel",
             markup=self.bot.create_reply_markup(keyboard=[["0", "1"], ["2", "3"]])
         )
 
@@ -259,6 +260,13 @@ class StartedStateHandler(BaseStateHandler):
                 text="Invalid option. Please enter a valid number (0-3)."
             )
             return
+        if what_to_update == 0:
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text="Update cancelled."
+            )
+            self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.NONE)
+            return
         self.bot.add_to_updating(chat_id=message.chat.id, what_to_update=what_to_update)
         self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.TYPE_NEW_VALUE)
         await self.bot.send_message(
@@ -278,7 +286,7 @@ class StartedStateHandler(BaseStateHandler):
                 text="Please enter a valid number for the new value."
             )
             return
-        if new_value < 0:  # Assuming negative values are not allowed
+        if new_value < 0:
             await self.bot.send_message(
                 chat_id=message.chat.id,
                 text="Negative values are not allowed. Please enter a valid number."
@@ -289,7 +297,15 @@ class StartedStateHandler(BaseStateHandler):
         if self.bot.update_exercise(chat_id=message.chat.id):
             await self.bot.send_message(
                 chat_id=message.chat.id,
-                text="Exercise updated successfully."
+                text="Exercise updated successfully.",
+                markup=self.bot.create_reply_markup(keyboard=[["/prev_exercise", "/next_exercise"], ["/prev_set", "/next_set"]])
+            )
+            self.bot.check_and_set_program(chat_id=message.chat.id, program_id=self.bot.selected_program[message.chat.id].id)
+            self.bot.state_machine[message.chat.id].set_substate_update_set(SubStateUpdateSet.NONE)
+            exercise_num = self.bot.get_exercise_num(chat_id=message.chat.id)
+            await self.bot.send_message(
+                chat_id=message.chat.id,
+                text=f"Set {self.bot.get_set_number(chat_id=self.update.message.chat.id)} of {self.bot.get_all_sets_num(chat_id=message.chat.id, exercise_num=exercise_num)}:\n\n{self.bot.get_exercise_set(chat_id=self.update.message.chat.id)}"
             )
         else:
             await self.bot.send_message(

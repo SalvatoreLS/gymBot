@@ -314,7 +314,7 @@ class TelegramBot:
         if chat_id not in self.updating:
             self.updating[chat_id] = ExerciseUpdate()
 
-        self.updating[chat_id].set_values(chat_id, exercise_num, set_num, what_to_update, value_to_update, exercise_expression)
+        self.updating[chat_id] = self.updating[chat_id].set_values(chat_id, exercise_num, set_num, what_to_update, value_to_update, exercise_expression)
 
     def get_exercise_num(self, chat_id) -> int:
         """
@@ -382,14 +382,14 @@ class TelegramBot:
         set_num = update.set_num
         what_to_update = self.get_string_what_to_update(update.what_to_update)
 
-        self.database.update_set(
+        return self.database.update_set(
             user_id=user_id,
             program_id=program_id,
             day_id=day_id,
             exercise_id=exercise_id,
-            set_num=set_num,
+            set_number=set_num,
             what_to_update=what_to_update,
-            value_to_update=update.value_to_update
+            new_value=update.value_to_update
         )
     
     def reset_set_index(self, chat_id):
